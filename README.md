@@ -1,49 +1,40 @@
-# Expense Tracker
+# Aura | Wealth Manager
 
-A professional, full-stack expense tracker application.
+Aura is a full-stack, aesthetically stunning expense tracker and wealth manager built with FastAPI (Backend) and React/Vite + Framer Motion (Frontend).
 
-## Features
-- **Authentication**: Secure JWT-based login and registration.
-- **Income & Expense Tracking**: Log your financial activities with dynamic categories.
-- **Analytics Dashboard**: Smart insights, monthly summaries, and visual charts (Pie, Bar, Line) using Chart.js.
-- **Customizable Categories**: Manage your own expense categories with custom icons and colors.
-- **Dark Mode**: Aesthetic modern UI with dark mode support and smooth animations.
-- **Responsive**: Works great on both desktop and mobile devices.
+## 🚀 Deployment Guide (Free Tier Strategy)
 
-## Tech Stack
-- **Backend**: FastAPI, SQLite, SQLAlchemy (Async), Pydantic.
-- **Frontend**: React (Vite), TailwindCSS, Chart.js, React Router.
+To deploy this app permanently for free, you will need three services. 
+*Note: A serverless database (Neon) just stores the data. You still need a platform (Render) to run the Python backend code, and another platform (Vercel) to run the React frontend code.*
 
-## Getting Started
+### 1. Database (Neon - Serverless Postgres)
+1. Go to [Neon.tech](https://neon.tech/) and create a free account.
+2. Create a new project.
+3. Once created, copy the **Connection String** (it will look like `postgresql://username:password@ep-cold-bird-1234.us-east-2.aws.neon.tech/neondb`).
+4. **Important for Async SQLAlchemy:** Change `postgresql://` at the start of the URL to `postgresql+asyncpg://` so that the async Python driver can connect to it.
 
-### Prerequisites
-- Python 3.12+
-- Node.js 20+
+### 2. Backend (Render - Web Service)
+1. Go to [Render.com](https://render.com/) and create a free account.
+2. Click **New +** and select **Web Service**.
+3. Connect your GitHub account and select this repository (`AURA-EXPENSE-TRACKER`).
+4. Configuration:
+   - **Root Directory:** (leave blank, or `./`)
+   - **Environment:** `Python 3`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+5. Click on **Advanced** and add Environment Variables:
+   - `DATABASE_URL` = (Paste your updated `postgresql+asyncpg://...` Neon URL here)
+   - `SECRET_KEY` = (A random long string of characters)
+6. Click **Create Web Service**. Once deployed, copy the backend URL (e.g., `https://aura-backend.onrender.com`).
 
-### Backend Setup
-1. Open a terminal in the root directory.
-2. Activate the virtual environment:
-   ```bash
-   .\venv\Scripts\activate
-   ```
-3. Run the backend server:
-   ```bash
-   uvicorn app.main:app --reload --port 8000
-   ```
-   The API will be available at `http://localhost:8000`. Swagger docs at `http://localhost:8000/docs`.
+### 3. Frontend (Vercel)
+1. Go to [Vercel.com](https://vercel.com/) and create a free account.
+2. Click **Add New Project** and import this repository (`AURA-EXPENSE-TRACKER`).
+3. Under **Framework Preset**, ensure it says `Vite`.
+4. Change the **Root Directory** to `frontend`.
+5. Under **Environment Variables**, add:
+   - Name: `VITE_API_URL`
+   - Value: (Paste your Render backend URL from step 2)
+6. Click **Deploy**.
 
-### Frontend Setup
-1. Open a new terminal and navigate to the `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
-3. Open `http://localhost:5173` in your browser.
-
-## Deployment Notes
-- **Database**: Currently uses SQLite. For production, update the `DATABASE_URL` in `.env` to a PostgreSQL instance.
-- **Security**: Change the `SECRET_KEY` in `.env` before deploying to production.
-- **Hosting**: The frontend can be built using `npm run build` and hosted on Vercel, Netlify, or Render. The backend can be hosted on Render or Railway.
+That's it! Your app will be live on the Vercel link provided.
