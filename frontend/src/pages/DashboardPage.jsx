@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useDate } from '../context/DateContext';
 import { incomeAPI, expenseAPI, analyticsAPI, categoryAPI } from '../services/api';
 import SummaryCard from '../components/SummaryCard';
 import MonthPicker from '../components/MonthPicker';
@@ -12,11 +13,9 @@ const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', SAR: '﷼', AED: 'د.إ' };
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { month, year, setMonthYear } = useDate();
   const currency = CURRENCY_SYMBOLS[user?.currency] || '₹';
 
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
   const [summary, setSummary] = useState(null);
   const [breakdown, setBreakdown] = useState([]);
   const [recentExpenses, setRecentExpenses] = useState([]);
@@ -51,7 +50,7 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchData(); }, [month, year]);
 
-  const handleMonthChange = (m, y) => { setMonth(m); setYear(y); };
+  const handleMonthChange = (m, y) => { setMonthYear(m, y); };
 
   const openForm = (type) => { setFormType(type); setShowForm(true); };
 

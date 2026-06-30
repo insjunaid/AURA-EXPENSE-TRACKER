@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { DateProvider } from './context/DateContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
@@ -53,30 +54,32 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
-          <AnimatedRoutes />
-        </Router>
+        <DateProvider>
+          <Router>
+            <AnimatedRoutes />
+          </Router>
 
-        {/* Toast notifications */}
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              borderRadius: '12px',
-              background: '#1e293b',
-              color: '#f1f5f9',
-              fontSize: '14px',
-              fontFamily: 'Inter, sans-serif',
-            },
-            success: {
-              iconTheme: { primary: '#22c55e', secondary: '#ffffff' },
-            },
-            error: {
-              iconTheme: { primary: '#ef4444', secondary: '#ffffff' },
-            },
-          }}
-        />
+          {/* Toast notifications */}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                borderRadius: '12px',
+                background: '#1e293b',
+                color: '#f1f5f9',
+                fontSize: '14px',
+                fontFamily: 'Inter, sans-serif',
+              },
+              success: {
+                iconTheme: { primary: '#22c55e', secondary: '#ffffff' },
+              },
+              error: {
+                iconTheme: { primary: '#ef4444', secondary: '#ffffff' },
+              },
+            }}
+          />
+        </DateProvider>
       </AuthProvider>
     </ThemeProvider>
   );

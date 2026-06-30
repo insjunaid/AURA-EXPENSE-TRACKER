@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useDate } from '../context/DateContext';
 import { incomeAPI } from '../services/api';
 import MonthPicker from '../components/MonthPicker';
 import TransactionList from '../components/TransactionList';
@@ -12,11 +13,9 @@ const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', SAR: '﷼', AED: 'د.إ' };
 
 export default function IncomePage() {
   const { user } = useAuth();
+  const { month, year, setMonthYear } = useDate();
   const currency = CURRENCY_SYMBOLS[user?.currency] || '₹';
 
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
   const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -74,7 +73,7 @@ export default function IncomePage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-dark-900 dark:text-white">Income</h1>
           <p className="text-dark-500 dark:text-dark-400 text-sm mt-1">Track all your income sources</p>
         </div>
-        <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
+        <MonthPicker month={month} year={year} onChange={(m, y) => setMonthYear(m, y)} />
       </div>
 
       {/* Total card */}

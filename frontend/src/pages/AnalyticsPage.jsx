@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useDate } from '../context/DateContext';
 import { analyticsAPI } from '../services/api';
 import MonthPicker from '../components/MonthPicker';
 import SummaryCard from '../components/SummaryCard';
@@ -14,11 +15,8 @@ const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', SAR: '﷼', AED: 'د.إ' };
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
+  const { month, year, setMonthYear } = useDate();
   const currency = CURRENCY_SYMBOLS[user?.currency] || '₹';
-
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
   const [analytics, setAnalytics] = useState(null);
   const [trends, setTrends] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +92,7 @@ export default function AnalyticsPage() {
           <p className="text-dark-500 dark:text-dark-400 text-sm mt-1">Deep insights into your spending patterns</p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
+          <MonthPicker month={month} year={year} onChange={(m, y) => setMonthYear(m, y)} />
           <button 
             onClick={handleDownloadReport}
             className="btn-secondary whitespace-nowrap hidden sm:block"
