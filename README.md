@@ -1,39 +1,94 @@
-# Aura | Wealth Manager
+<div align="center">
+  <img src="frontend/public/favicon.svg" alt="Aura Logo" width="100"/>
+  
+  # Aura | Wealth Manager
 
-Aura is a full-stack, aesthetically stunning expense tracker and wealth manager built with FastAPI (Backend) and React/Vite + Framer Motion (Frontend).
+  **Aura is a full-stack, highly aesthetic personal finance platform designed to give users deep, actionable insights into their wealth. Built with a premium monochromatic glassmorphism design, Aura allows you to seamlessly track your income, categorize daily expenses, and monitor your long-term investments. With dynamic data visualization and smart savings calculations, taking control of your financial future has never looked this good.**
+</div>
 
-## 🚀 Deployment Guide (Free Tier Strategy - No Sleep)
+<br />
 
-To deploy this app permanently for free without the backend ever going to sleep, you will use the following combination:
+<div align="center">
+  <!-- NOTE TO USER: Replace these URLs with the actual paths to your screenshots when you upload them to the repo -->
+  <img src="docs/dashboard-preview.png" alt="Dashboard Preview" width="800" />
+  <br/>
+  <br/>
+  <img src="docs/analytics-preview.png" alt="Analytics Preview" width="800" />
+</div>
 
-### 1. Database (Neon - Serverless Postgres)
-1. Go to [Neon.tech](https://neon.tech/) and create a free account.
-2. Create a new project.
-3. Once created, copy the **Connection String** (it will look like `postgresql://username:password@ep-cold-bird-1234.us-east-2.aws.neon.tech/neondb`).
-4. **Important for Async SQLAlchemy:** Change `postgresql://` at the start of the URL to `postgresql+asyncpg://` so that the async Python driver can connect to it.
+<br />
 
-### 2. Backend (Koyeb - 24/7 Web Service)
-1. Go to [Koyeb.com](https://www.koyeb.com/) and create a free account.
-2. Click **Create Service**.
-3. Select **GitHub** as the deployment method and choose this repository (`AURA-EXPENSE-TRACKER`).
-4. In the configuration:
-   - **Builder:** Choose **Buildpack**.
-   - **Run Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - **Instance:** Select the **Eco (Free)** instance type.
-5. In the **Environment variables** section, add two variables:
-   - `DATABASE_URL` = (Paste your updated `postgresql+asyncpg://...` Neon URL here)
-   - `SECRET_KEY` = (A random long string of characters, e.g., `AuraSecureKey123!`)
-6. Give your service a name (e.g., `aura-backend`) and click **Deploy**.
-7. Once deployed, copy your Koyeb public URL (e.g., `https://aura-backend-yourname.koyeb.app`).
+## ✨ Features
 
-### 3. Frontend (Vercel)
-1. Go to [Vercel.com](https://vercel.com/) and create a free account.
-2. Click **Add New Project** and import this repository (`AURA-EXPENSE-TRACKER`).
-3. Under **Framework Preset**, ensure it says `Vite`.
-4. Change the **Root Directory** to `frontend`.
-5. Under **Environment Variables**, add:
-   - Name: `VITE_API_URL`
-   - Value: (Paste your Koyeb backend URL from step 2. *Make sure there is no trailing slash at the end of the URL.*)
-6. Click **Deploy**.
+- **Monochrome Glassmorphism UI:** Fluid page transitions, sleek dark/light mode detection, and a professional black & white aesthetic built with TailwindCSS and Framer Motion.
+- **Strict Data Isolation:** Custom JWT-based authentication ensures your financial data is completely secure and isolated from other users in the system.
+- **Smart Wealth Tracking:** Separates your cash flow (Income vs. Expenses) from your assets (Investments), giving you an accurate "Remaining Savings" calculation.
+- **Comprehensive Analytics:** Dynamic pie charts and trend lines (built with Recharts) break down your monthly spending habits, transaction counts, and savings rates.
+- **Multi-Currency Support:** Track your wealth in INR (₹), USD ($), SAR (﷼), or AED (د.إ).
+- **One-Click Export:** Download detailed CSV reports of your monthly financial summaries directly from the dashboard.
 
-That's it! Your full-stack app is now live with a database that securely stores data and a backend that never sleeps.
+## 🛠 Tech Stack
+
+### Frontend
+- **Framework:** React 18 (Vite)
+- **Styling:** TailwindCSS, Vanilla CSS (Glassmorphism), Headless UI
+- **Animations:** Framer Motion
+- **Data Visualization:** Recharts
+- **State/Routing:** React Router DOM, Context API, Axios
+
+### Backend
+- **Framework:** FastAPI (Python 3.10+)
+- **Database:** PostgreSQL (Neon Serverless) via SQLAlchemy ORM (Async)
+- **Authentication:** JWT (JSON Web Tokens), Passlib (Bcrypt hashing)
+- **Server:** Uvicorn
+
+---
+
+## 🚀 Getting Started (Local Development)
+
+To run this project locally, follow these steps:
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/insjunaid/AURA-EXPENSE-TRACKER.git
+cd AURA-EXPENSE-TRACKER
+```
+
+### 2. Setup the Backend (FastAPI)
+Open a terminal in the root directory:
+```bash
+# Create a virtual environment
+python -m venv venv
+
+# Activate the virtual environment
+# Windows:
+.\venv\Scripts\activate
+# Mac/Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the FastAPI server
+uvicorn app.main:app --reload --port 8000
+```
+
+### 3. Setup the Frontend (React/Vite)
+Open a **new** terminal, leaving the backend running:
+```bash
+# Navigate to the frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start the Vite development server
+npm run dev
+```
+
+### 4. Open the App
+Visit `http://localhost:5173` in your browser. The frontend will automatically connect to the local backend API running on port 8000.
+
+---
+
+> **Note on Database:** Out of the box, the backend connects to an async PostgreSQL database via the `DATABASE_URL` environment variable. To test locally, you can modify `app/database.py` to use a local `aiosqlite` file, or supply a free Neon DB Postgres URL in your `.env` file.
