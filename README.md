@@ -103,3 +103,12 @@ Visit `http://localhost:5173` in your browser. The frontend will automatically c
 ---
 
 > **Note on Database:** Out of the box, the backend connects to an async PostgreSQL database via the `DATABASE_URL` environment variable. To test locally, you can modify `app/database.py` to use a local `aiosqlite` file, or supply a free Neon DB Postgres URL in your `.env` file.
+
+<br />
+
+---
+
+<div align="center">
+  <h3>Made with 💻 & ❤️</h3>
+  <p>Building better tools for better financial futures.</p>
+</div>
