@@ -1,6 +1,17 @@
 <div align="center">
   <img src="frontend/public/favicon.svg" alt="Aura Logo" width="100"/>
   
+  <br />
+  
+  <img src="https://img.shields.io/badge/React-18.0-61DAFB?logo=react&logoColor=black&style=flat-square" alt="React Badge"/>
+  <img src="https://img.shields.io/badge/Vite-6.0-646CFF?logo=vite&logoColor=white&style=flat-square" alt="Vite Badge"/>
+  <img src="https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?logo=tailwind-css&logoColor=white&style=flat-square" alt="Tailwind Badge"/>
+  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white&style=flat-square" alt="FastAPI Badge"/>
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white&style=flat-square" alt="Python Badge"/>
+  <img src="https://img.shields.io/badge/PostgreSQL-Serverless-4169E1?logo=postgresql&logoColor=white&style=flat-square" alt="Postgres Badge"/>
+
+  <br />
+
   # Aura | Wealth Manager
 
   **Aura is a full-stack, highly aesthetic personal finance platform designed to give users deep, actionable insights into their wealth. Built with a premium monochromatic glassmorphism design, Aura allows you to seamlessly track your income, categorize daily expenses, and monitor your long-term investments. With dynamic data visualization and smart savings calculations, taking control of your financial future has never looked this good.**
