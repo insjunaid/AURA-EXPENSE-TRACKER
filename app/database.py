@@ -6,12 +6,22 @@ from app.config import get_settings
 
 settings = get_settings()
 
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# asyncpg does not accept sslmode query parameter directly via url string
+if "?sslmode=" in db_url:
+    db_url = db_url.split("?")[0]
+
 # Connection arguments: check_same_thread is only valid for SQLite
-connect_args = {"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
+connect_args = {"check_same_thread": False} if "sqlite" in db_url else {}
 
 # Create async engine
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     echo=settings.DEBUG,
     connect_args=connect_args,
 )
