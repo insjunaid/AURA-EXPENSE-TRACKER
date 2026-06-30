@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Variables ──────────────────────────────────────────────────────── */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f4f4f5;
+  --bg-card: #ffffff;
+  --text-primary: #09090b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+  --border-color: #e4e4e7;
+  --gradient-start: #3d3d3d;
+  --gradient-end: #000000;
+}
+
+.dark {
+  --bg-primary: #000000;
+  --bg-secondary: #09090b;
+  --bg-card: #09090b;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
+  --border-color: #27272a;
+}
+
+/* ─── Base Styles ────────────────────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar Styling ──────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #52525b;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+
+/* ─── Utility Classes ────────────────────────────────────────────────────── */
+@layer components {
+  /* Glassmorphism card */
+  .glass-card {
+    @apply bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-dark-200/50 dark:border-dark-700/50 rounded-2xl shadow-card dark:shadow-card-dark;
+  }
+
+  /* Gradient background for hero sections */
+  .gradient-bg {
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #333333 100%);
+  }
+
+  .dark .gradient-bg {
+    background: linear-gradient(135deg, #050505 0%, #000000 50%, #111111 100%);
+  }
+
+  /* Subtle gradient card background */
+  .gradient-card {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.08) 100%);
+  }
+
+  .dark .gradient-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.05) 100%);
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-xl
+           hover:bg-dark-800 dark:hover:bg-dark-200 active:scale-[0.98]
+           transition-all duration-200 shadow-lg shadow-black/10 dark:shadow-white/10
+           focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 dark:focus:ring-offset-black;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-2.5 bg-dark-100 dark:bg-dark-800 text-dark-900 dark:text-dark-100 font-semibold rounded-xl
+           hover:bg-dark-200 dark:hover:bg-dark-700 active:scale-[0.98]
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-dark-400 focus:ring-offset-2 dark:focus:ring-offset-black;
+  }
+
+  .btn-danger {
+    @apply px-6 py-2.5 bg-danger text-white font-semibold rounded-xl
+           hover:bg-red-600 active:scale-[0.98]
+           transition-all duration-200 shadow-lg shadow-red-500/25
+           focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+  }
+
+  /* Input styles */
+  .input-field {
+    @apply w-full px-4 py-3 bg-transparent border-2 border-dark-200 dark:border-dark-700
+           rounded-xl text-dark-900 dark:text-dark-100
+           placeholder:text-dark-400 dark:placeholder:text-dark-500
+           focus:outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-dark-900
+           transition-all duration-300;
+  }
+
+  /* Badge/tag */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+
+  /* Sidebar nav item */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-dark-500 dark:text-dark-400
+           hover:bg-dark-100 dark:hover:bg-dark-800 hover:text-dark-900 dark:hover:text-dark-100
+           transition-all duration-200 cursor-pointer;
+  }
+
+  .nav-item.active {
+    @apply bg-black dark:bg-white text-white dark:text-black font-semibold shadow-lg shadow-black/10 dark:shadow-white/10;
+  }
+
+  /* Stat card with hover lift */
+  .stat-card {
+    @apply glass-card p-6 hover:shadow-glow hover:-translate-y-1 transition-all duration-300 cursor-default;
+  }
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+
+/* Page transition */
+.page-enter {
+  animation: fadeIn 0.4s ease-out, slideUp 0.4s ease-out;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
