@@ -325,7 +325,20 @@ async def get_monthly_totals(db: AsyncSession, user_id: int, month: int, year: i
     )
     total_expenses = float(expense_result.scalar())
 
-    savings = total_income - total_expenses
+    # Total investments
+    investment_result = await db.execute(
+        select(func.coalesce(func.sum(Investment.amount), 0.0)).where(
+            and_(
+                Investment.user_id == user_id,
+                extract("month", Investment.date_invested) == month,
+                extract("year", Investment.date_invested) == year,
+            )
+        )
+    )
+    total_investments = float(investment_result.scalar())
+
+    # Savings = Income - Expenses - Investments
+    savings = total_income - total_expenses - total_investments
     savings_rate = (savings / total_income * 100) if total_income > 0 else 0.0
 
     return {
@@ -333,6 +346,7 @@ async def get_monthly_totals(db: AsyncSession, user_id: int, month: int, year: i
         "year": year,
         "total_income": total_income,
         "total_expenses": total_expenses,
+        "total_investments": total_investments,
         "savings": savings,
         "savings_rate": round(savings_rate, 1),
     }

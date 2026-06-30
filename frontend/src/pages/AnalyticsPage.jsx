@@ -117,8 +117,8 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard title="Income" amount={summary?.total_income || 0} icon="💰" color="green" currency={currency} delay={0} />
         <SummaryCard title="Expenses" amount={summary?.total_expenses || 0} icon="💳" color="red" currency={currency} delay={100} />
-        <SummaryCard title="Savings" amount={summary?.savings || 0} icon="🏦" color="primary" currency={currency} delay={200} />
-        <SummaryCard title="Savings Rate" amount={summary?.savings_rate || 0} icon="📊" color="purple" currency="%" delay={300} />
+        <SummaryCard title="Investments" amount={summary?.total_investments || 0} icon="📈" color="primary" currency={currency} delay={150} />
+        <SummaryCard title="Savings (Remaining)" amount={summary?.savings || 0} icon="🏦" color="purple" currency={currency} delay={200} />
       </div>
 
       {/* Charts Grid */}

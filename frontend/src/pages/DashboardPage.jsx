@@ -106,20 +106,20 @@ export default function DashboardPage() {
           delay={100}
         />
         <SummaryCard
-          title="Savings"
-          amount={summary?.savings || 0}
-          icon="🏦"
+          title="Investments"
+          amount={summary?.total_investments || 0}
+          icon="📈"
           color="primary"
           currency={currency}
-          delay={200}
+          delay={150}
         />
         <SummaryCard
-          title="Savings Rate"
-          amount={summary?.savings_rate || 0}
-          icon="📈"
+          title="Savings (Remaining)"
+          amount={summary?.savings || 0}
+          icon="🏦"
           color="purple"
-          currency=""
-          delay={300}
+          currency={currency}
+          delay={200}
         />
       </div>
 
