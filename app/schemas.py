@@ -144,6 +144,7 @@ class MonthlySummary(BaseModel):
     year: int
     total_income: float
     total_expenses: float
+    total_investments: float = 0.0
     savings: float
     savings_rate: float  # percentage
 
@@ -163,6 +164,7 @@ class TrendDataPoint(BaseModel):
     label: str  # "Jan 2026"
     total_income: float
     total_expenses: float
+    total_investments: float = 0.0
     savings: float
 
 
