@@ -9,7 +9,7 @@ from app.auth import get_current_user
 from app.schemas import InvestmentCreate, InvestmentUpdate, InvestmentResponse
 from app import crud
 
-router = APIRouter(prefix="/investments", tags=["Investments"])
+router = APIRouter(prefix="/api/investments", tags=["Investments"])
 
 
 @router.post("/", response_model=InvestmentResponse)

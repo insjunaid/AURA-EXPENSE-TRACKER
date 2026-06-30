@@ -13,7 +13,6 @@ from app.auth import hash_password
 # ─── Default Categories ──────────────────────────────────────────────────────
 
 DEFAULT_CATEGORIES = [
-    {"name": "Investments", "icon": "📈", "color": "#6366f1", "is_default": True},
     {"name": "Family", "icon": "👨‍👩‍👧", "color": "#ec4899", "is_default": True},
     {"name": "Impulse/Malicious", "icon": "⚡", "color": "#ef4444", "is_default": True},
     {"name": "Petrol/Fuel", "icon": "⛽", "color": "#f59e0b", "is_default": True},

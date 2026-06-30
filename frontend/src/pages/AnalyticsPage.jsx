@@ -53,6 +53,32 @@ export default function AnalyticsPage() {
   const breakdown = analytics?.breakdown || [];
   const suggestions = analytics?.suggestions || [];
 
+  const handleDownloadReport = () => {
+    if (!analytics) return;
+    const { summary, breakdown } = analytics;
+    let csv = `Aura Wealth Manager - Monthly Report (${month}/${year})\n\n`;
+    
+    // Summary Section
+    csv += `Summary\n`;
+    csv += `Total Income,${summary.total_income}\n`;
+    csv += `Total Expenses,${summary.total_expenses}\n`;
+    csv += `Net Savings,${summary.savings}\n`;
+    csv += `Savings Rate,${summary.savings_rate}%\n\n`;
+
+    // Category Breakdown Section
+    csv += `Expense Breakdown\n`;
+    csv += `Category,Amount,Share (%),Transactions\n`;
+    breakdown.forEach(b => {
+      csv += `"${b.category_name}",${b.total_amount},${b.percentage},${b.transaction_count}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `aura-report-${year}-${month.toString().padStart(2, '0')}.csv`;
+    link.click();
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -67,8 +93,25 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-dark-900 dark:text-white">Analytics</h1>
           <p className="text-dark-500 dark:text-dark-400 text-sm mt-1">Deep insights into your spending patterns</p>
         </div>
-        <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
+          <button 
+            onClick={handleDownloadReport}
+            className="btn-secondary whitespace-nowrap hidden sm:block"
+            title="Download CSV Report"
+          >
+            📥 Export CSV
+          </button>
+        </div>
       </div>
+      
+      {/* Mobile Download Button */}
+      <button 
+        onClick={handleDownloadReport}
+        className="btn-secondary w-full sm:hidden flex justify-center items-center gap-2"
+      >
+        📥 Export Monthly Report to CSV
+      </button>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
