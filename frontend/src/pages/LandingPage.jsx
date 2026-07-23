@@ -1,6 +1,7 @@
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import { BarChart3, ShieldCheck, TrendingUp } from 'lucide-react';
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -71,17 +72,17 @@ export default function LandingPage() {
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24 max-w-5xl mx-auto w-full text-left"
         >
           <div className="glass-card p-8 rounded-3xl hover:border-dark-300 dark:hover:border-dark-600 transition-colors">
-            <div className="text-3xl mb-4">📊</div>
+            <div className="text-3xl mb-4"><BarChart3 size={32} className="text-dark-900 dark:text-white" /></div>
             <h3 className="text-xl font-bold mb-2">Deep Analytics</h3>
             <p className="text-dark-500 dark:text-dark-400 leading-relaxed">Interactive charts and visual breakdowns of exactly where your money goes every month.</p>
           </div>
           <div className="glass-card p-8 rounded-3xl hover:border-dark-300 dark:hover:border-dark-600 transition-colors">
-            <div className="text-3xl mb-4">🔒</div>
+            <div className="text-3xl mb-4"><ShieldCheck size={32} className="text-dark-900 dark:text-white" /></div>
             <h3 className="text-xl font-bold mb-2">Total Privacy</h3>
             <p className="text-dark-500 dark:text-dark-400 leading-relaxed">Your financial data is strictly isolated. No third-party trackers, and no bank linking required.</p>
           </div>
           <div className="glass-card p-8 rounded-3xl hover:border-dark-300 dark:hover:border-dark-600 transition-colors">
-            <div className="text-3xl mb-4">📈</div>
+            <div className="text-3xl mb-4"><TrendingUp size={32} className="text-dark-900 dark:text-white" /></div>
             <h3 className="text-xl font-bold mb-2">Asset Tracking</h3>
             <p className="text-dark-500 dark:text-dark-400 leading-relaxed">Separate your everyday expenses from your long-term investments for true net-worth visibility.</p>
           </div>

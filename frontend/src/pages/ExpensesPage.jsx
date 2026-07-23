@@ -7,6 +7,7 @@ import TransactionList from '../components/TransactionList';
 import TransactionForm from '../components/TransactionForm';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import { CreditCard } from 'lucide-react';
 
 const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', SAR: '﷼', AED: 'د.إ' };
 
@@ -90,7 +91,7 @@ export default function ExpensesPage() {
             <p className="text-xs text-dark-400 mt-1">{expenses.length} transactions</p>
           </div>
           <div className="w-16 h-16 rounded-2xl bg-black dark:bg-white flex items-center justify-center text-3xl shadow-lg">
-            💳
+            <CreditCard size={28} className="text-white dark:text-black" />
           </div>
         </div>
       </div>

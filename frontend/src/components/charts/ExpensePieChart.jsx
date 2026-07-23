@@ -1,6 +1,7 @@
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useTheme } from '../../context/ThemeContext';
+import { PieChart } from 'lucide-react';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -11,7 +12,7 @@ export default function ExpensePieChart({ breakdown = [] }) {
     return (
       <div className="flex items-center justify-center h-64 text-dark-400 dark:text-dark-500">
         <div className="text-center">
-          <p className="text-4xl mb-2">📊</p>
+          <p className="text-4xl mb-2"><PieChart size={40} className="mx-auto" /></p>
           <p className="text-sm">No expense data for this month</p>
         </div>
       </div>

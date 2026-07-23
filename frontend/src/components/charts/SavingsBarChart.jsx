@@ -4,6 +4,7 @@ import {
   BarElement, Tooltip, Legend,
 } from 'chart.js';
 import { useTheme } from '../../context/ThemeContext';
+import { BarChart3 } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -14,7 +15,7 @@ export default function SavingsBarChart({ trends = [] }) {
     return (
       <div className="flex items-center justify-center h-64 text-dark-400 dark:text-dark-500">
         <div className="text-center">
-          <p className="text-4xl mb-2">📉</p>
+          <p className="text-4xl mb-2"><BarChart3 size={40} className="mx-auto" /></p>
           <p className="text-sm">No trend data available</p>
         </div>
       </div>

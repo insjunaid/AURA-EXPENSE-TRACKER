@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { categoryAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import { Package } from 'lucide-react';
 
 const currencies = [
   { code: 'INR', label: '₹ INR — Indian Rupee' },

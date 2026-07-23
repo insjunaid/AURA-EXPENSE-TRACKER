@@ -8,6 +8,7 @@ import TransactionForm from '../components/TransactionForm';
 import ExpensePieChart from '../components/charts/ExpensePieChart';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import { Wallet, CreditCard, TrendingUp, Landmark, Package, Banknote, FileText } from 'lucide-react';
 
 const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', SAR: '﷼', AED: 'د.إ' };
 
@@ -91,7 +92,7 @@ export default function DashboardPage() {
         <SummaryCard
           title="Total Income"
           amount={summary?.total_income || 0}
-          icon="💰"
+          icon={<Wallet size={24} />}
           color="green"
           currency={currency}
           delay={0}
@@ -99,7 +100,7 @@ export default function DashboardPage() {
         <SummaryCard
           title="Total Expenses"
           amount={summary?.total_expenses || 0}
-          icon="💳"
+          icon={<CreditCard size={24} />}
           color="red"
           currency={currency}
           delay={100}
@@ -107,7 +108,7 @@ export default function DashboardPage() {
         <SummaryCard
           title="Investments"
           amount={summary?.total_investments || 0}
-          icon="📈"
+          icon={<TrendingUp size={24} />}
           color="primary"
           currency={currency}
           delay={150}
@@ -115,7 +116,7 @@ export default function DashboardPage() {
         <SummaryCard
           title="Savings (Remaining)"
           amount={summary?.savings || 0}
-          icon="🏦"
+          icon={<Landmark size={24} />}
           color="purple"
           currency={currency}
           delay={200}
@@ -168,7 +169,7 @@ export default function DashboardPage() {
                         : '#22c55e20',
                     }}
                   >
-                    {t._type === 'expense' ? (t.category?.icon || '📦') : '💵'}
+                    {t._type === 'expense' ? (t.category?.icon || <Package size={16} />) : <Banknote size={16} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-dark-800 dark:text-dark-200 truncate">
@@ -185,7 +186,7 @@ export default function DashboardPage() {
               ))}
             {recentIncome.length === 0 && recentExpenses.length === 0 && (
               <div className="text-center py-8 text-dark-400">
-                <p className="text-4xl mb-2">📝</p>
+                <p className="text-4xl mb-2"><FileText size={40} className="mx-auto" /></p>
                 <p className="text-sm">No transactions yet this month</p>
               </div>
             )}

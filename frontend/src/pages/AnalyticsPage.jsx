@@ -10,6 +10,7 @@ import TrendLineChart from '../components/charts/TrendLineChart';
 import SuggestionCard from '../components/SuggestionCard';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import { Download, Wallet, CreditCard, TrendingUp, Landmark, PieChart, BarChart3, LineChart, ClipboardList, Lightbulb } from 'lucide-react';
 
 const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', SAR: '﷼', AED: 'د.إ' };
 
@@ -98,7 +99,7 @@ export default function AnalyticsPage() {
             className="btn-secondary whitespace-nowrap hidden sm:block"
             title="Download CSV Report"
           >
-            📥 Export CSV
+            <Download size={16} className="inline mr-1" /> Export CSV
           </button>
         </div>
       </div>
@@ -108,15 +109,15 @@ export default function AnalyticsPage() {
         onClick={handleDownloadReport}
         className="btn-secondary w-full sm:hidden flex justify-center items-center gap-2"
       >
-        📥 Export Monthly Report to CSV
+        <Download size={16} className="inline mr-1" /> Export Monthly Report to CSV
       </button>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryCard title="Income" amount={summary?.total_income || 0} icon="💰" color="green" currency={currency} delay={0} />
-        <SummaryCard title="Expenses" amount={summary?.total_expenses || 0} icon="💳" color="red" currency={currency} delay={100} />
-        <SummaryCard title="Investments" amount={summary?.total_investments || 0} icon="📈" color="primary" currency={currency} delay={150} />
-        <SummaryCard title="Savings (Remaining)" amount={summary?.savings || 0} icon="🏦" color="purple" currency={currency} delay={200} />
+        <SummaryCard title="Income" amount={summary?.total_income || 0} icon={<Wallet size={24} />} color="green" currency={currency} delay={0} />
+        <SummaryCard title="Expenses" amount={summary?.total_expenses || 0} icon={<CreditCard size={24} />} color="red" currency={currency} delay={100} />
+        <SummaryCard title="Investments" amount={summary?.total_investments || 0} icon={<TrendingUp size={24} />} color="primary" currency={currency} delay={150} />
+        <SummaryCard title="Savings (Remaining)" amount={summary?.savings || 0} icon={<Landmark size={24} />} color="purple" currency={currency} delay={200} />
       </div>
 
       {/* Charts Grid */}
@@ -124,7 +125,7 @@ export default function AnalyticsPage() {
         {/* Expense Breakdown Pie */}
         <div className="glass-card p-6 animate-slide-up">
           <h3 className="text-lg font-semibold text-dark-900 dark:text-white mb-4">
-            📊 Expense Breakdown
+            <PieChart size={20} className="inline mr-2" />Expense Breakdown
           </h3>
           <ExpensePieChart breakdown={breakdown} />
         </div>
@@ -132,7 +133,7 @@ export default function AnalyticsPage() {
         {/* Monthly Comparison Bar */}
         <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: '100ms' }}>
           <h3 className="text-lg font-semibold text-dark-900 dark:text-white mb-4">
-            📉 Monthly Comparison
+            <BarChart3 size={20} className="inline mr-2" />Monthly Comparison
           </h3>
           <SavingsBarChart trends={trends} />
         </div>
@@ -141,7 +142,7 @@ export default function AnalyticsPage() {
       {/* Full-width Trend Line */}
       <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
         <h3 className="text-lg font-semibold text-dark-900 dark:text-white mb-4">
-          📈 Income vs Expense Trends (Last 6 Months)
+          <LineChart size={20} className="inline mr-2" />Income vs Expense Trends (Last 6 Months)
         </h3>
         <TrendLineChart trends={trends} />
       </div>
@@ -151,7 +152,7 @@ export default function AnalyticsPage() {
         <div className="glass-card overflow-hidden animate-slide-up" style={{ animationDelay: '300ms' }}>
           <div className="p-6 pb-4">
             <h3 className="text-lg font-semibold text-dark-900 dark:text-white">
-              📋 Category Details
+              <ClipboardList size={20} className="inline mr-2" />Category Details
             </h3>
           </div>
           <div className="overflow-x-auto">
@@ -203,7 +204,7 @@ export default function AnalyticsPage() {
       {suggestions.length > 0 && (
         <div className="animate-slide-up" style={{ animationDelay: '400ms' }}>
           <h3 className="text-lg font-semibold text-dark-900 dark:text-white mb-4">
-            💡 Smart Suggestions
+            <Lightbulb size={20} className="inline mr-2" />Smart Suggestions
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {suggestions.map((s, i) => (

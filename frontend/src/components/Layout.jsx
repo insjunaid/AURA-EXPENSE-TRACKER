@@ -2,14 +2,15 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from './ThemeToggle';
+import { LayoutDashboard, Wallet, CreditCard, TrendingUp, Search, User, LogOut, Hand } from 'lucide-react';
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { path: '/income', label: 'Income', icon: '💰' },
-  { path: '/expenses', label: 'Expenses', icon: '💳' },
-  { path: '/investments', label: 'Investments', icon: '📈' },
-  { path: '/analytics', label: 'Analytics', icon: '🔍' },
-  { path: '/profile', label: 'Profile', icon: '👤' },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/income', label: 'Income', icon: Wallet },
+  { path: '/expenses', label: 'Expenses', icon: CreditCard },
+  { path: '/investments', label: 'Investments', icon: TrendingUp },
+  { path: '/analytics', label: 'Analytics', icon: Search },
+  { path: '/profile', label: 'Profile', icon: User },
 ];
 
 export default function Layout() {
@@ -66,7 +67,7 @@ export default function Layout() {
                 `nav-item ${isActive ? 'active' : ''}`
               }
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-xl"><item.icon size={20} /></span>
               <span>{item.label}</span>
             </NavLink>
           ))}
@@ -90,7 +91,7 @@ export default function Layout() {
               hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400
               transition-all duration-200"
           >
-            <span>🚪</span>
+            <LogOut size={16} />
             <span>Logout</span>
           </button>
         </div>
@@ -114,8 +115,8 @@ export default function Layout() {
 
             {/* Greeting */}
             <div className="hidden lg:block">
-              <h2 className="text-lg font-semibold text-dark-900 dark:text-white">
-                Welcome back, {user?.name?.split(' ')[0]} 👋
+              <h2 className="text-lg font-semibold text-dark-900 dark:text-white flex items-center gap-2">
+                Welcome back, {user?.name?.split(' ')[0]} <Hand size={20} className="text-amber-500" />
               </h2>
               <p className="text-sm text-dark-500 dark:text-dark-400">
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -152,7 +153,7 @@ export default function Layout() {
                 }`
               }
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-xl"><item.icon size={18} /></span>
               <span className="text-[10px] font-medium">{item.label}</span>
             </NavLink>
           ))}

@@ -8,6 +8,7 @@ import TransactionForm from '../components/TransactionForm';
 import toast from 'react-hot-toast';
 
 import { motion } from 'framer-motion';
+import { Wallet } from 'lucide-react';
 
 const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', SAR: '﷼', AED: 'د.إ' };
 
@@ -87,7 +88,7 @@ export default function IncomePage() {
             <p className="text-xs text-dark-400 mt-1">{incomes.length} entries</p>
           </div>
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-3xl shadow-lg">
-            💰
+            <Wallet size={28} className="text-white" />
           </div>
         </div>
       </div>

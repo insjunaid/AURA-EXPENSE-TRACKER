@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import { Eye, EyeOff, BarChart3, Lightbulb, ShieldCheck, Smartphone } from 'lucide-react';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -55,7 +56,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(formData.name, formData.email, formData.password, formData.currency);
-      toast.success('Account created! Welcome aboard! 🚀');
+      toast.success('Account created! Welcome aboard!');
       navigate('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Registration failed. Please try again.');
@@ -87,9 +88,14 @@ export default function RegisterPage() {
 
           {/* Features list */}
           <div className="mt-12 space-y-4">
-            {['📊 Real-time analytics', '💡 Smart suggestions', '🔒 Secure & private', '📱 Works everywhere'].map((f, i) => (
+            {[
+              { icon: <BarChart3 size={16} className="inline mr-2" />, label: 'Real-time analytics' },
+              { icon: <Lightbulb size={16} className="inline mr-2" />, label: 'Smart suggestions' },
+              { icon: <ShieldCheck size={16} className="inline mr-2" />, label: 'Secure & private' },
+              { icon: <Smartphone size={16} className="inline mr-2" />, label: 'Works everywhere' },
+            ].map((f, i) => (
               <div key={i} className="flex items-center gap-3 text-white/90 animate-slide-up" style={{ animationDelay: `${i * 150}ms` }}>
-                <span>{f}</span>
+                <span>{f.icon}{f.label}</span>
               </div>
             ))}
           </div>
@@ -175,7 +181,7 @@ export default function RegisterPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600 transition-colors"
                 >
-                  {showPassword ? '🙈' : '👁️'}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               {/* Password strength bar */}

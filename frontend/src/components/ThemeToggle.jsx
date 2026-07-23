@@ -1,4 +1,5 @@
 import { useTheme } from '../context/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 
 export default function ThemeToggle() {
   const { isDark, toggleTheme } = useTheme();
@@ -11,8 +12,8 @@ export default function ThemeToggle() {
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {/* Track icons */}
-      <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs">☀️</span>
-      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs">🌙</span>
+      <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs"><Sun size={12} className="text-amber-500" /></span>
+      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs"><Moon size={12} className="text-blue-400" /></span>
 
       {/* Sliding dot */}
       <span

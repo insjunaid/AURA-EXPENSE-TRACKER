@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CreditCard, Wallet, Package, Banknote, TrendingUp } from 'lucide-react';
 
 export default function TransactionList({
   transactions = [],
@@ -58,7 +59,7 @@ export default function TransactionList({
   if (transactions.length === 0) {
     return (
       <div className="glass-card p-12 text-center">
-        <div className="text-6xl mb-4">{isExpense ? '💳' : '💰'}</div>
+        <div className="text-6xl mb-4">{isExpense ? <CreditCard size={48} className="mx-auto text-dark-300" /> : <Wallet size={48} className="mx-auto text-dark-300" />}</div>
         <h3 className="text-lg font-semibold text-dark-700 dark:text-dark-300 mb-2">
           No {isExpense ? 'expenses' : isIncome ? 'income' : 'investments'} yet
         </h3>
@@ -126,7 +127,7 @@ export default function TransactionList({
                   : isIncome ? '#22c55e20' : '#8b5cf620',
               }}
             >
-              {isExpense ? t.category?.icon || '📦' : isIncome ? '💵' : '📈'}
+              {isExpense ? (t.category?.icon || <Package size={18} />) : isIncome ? <Banknote size={18} /> : <TrendingUp size={18} />}
             </div>
 
             {/* Details */}
