@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { categoryAPI } from '../services/api';
+import toast from 'react-hot-toast';
+import { Plus } from 'lucide-react';
 
 export default function TransactionForm({
   type = 'expense', // 'expense', 'income', or 'investment'
@@ -12,6 +15,13 @@ export default function TransactionForm({
   const isIncome = type === 'income';
   const isInvestment = type === 'investment';
 
+  const [localCategories, setLocalCategories] = useState(categories);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatIcon, setNewCatIcon] = useState('📦');
+  const [newCatColor, setNewCatColor] = useState('#6366f1');
+  const [addingCategory, setAddingCategory] = useState(false);
+
   const [formData, setFormData] = useState({
     amount: '',
     source: '',
@@ -24,6 +34,10 @@ export default function TransactionForm({
     notes: '',
   });
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setLocalCategories(categories);
+  }, [categories]);
 
   useEffect(() => {
     if (initialData) {
@@ -43,6 +57,24 @@ export default function TransactionForm({
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    setAddingCategory(true);
+    try {
+      const res = await categoryAPI.create({ name: newCatName, icon: newCatIcon, color: newCatColor });
+      toast.success('Category added!');
+      setLocalCategories(prev => [...prev, res.data]);
+      setFormData(prev => ({ ...prev, category_id: res.data.id.toString() }));
+      setShowAddCategory(false);
+      setNewCatName('');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to add category');
+    } finally {
+      setAddingCategory(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -130,23 +162,67 @@ export default function TransactionForm({
           {/* Source / Category / Asset Type */}
           {isExpense && (
             <div>
-              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
-                Category *
-              </label>
-              <select
-                name="category_id"
-                value={formData.category_id}
-                onChange={handleChange}
-                required
-                className="input-field"
-              >
-                <option value="">Select category</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.icon} {cat.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300">
+                  Category *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowAddCategory(!showAddCategory)}
+                  className="text-xs text-primary-500 hover:text-primary-600 flex items-center gap-1 font-medium"
+                >
+                  <Plus size={14} /> Add New
+                </button>
+              </div>
+
+              {showAddCategory ? (
+                <div className="p-3 border border-dark-200 dark:border-dark-700 rounded-xl bg-dark-50 dark:bg-dark-800/50 space-y-3 mb-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCatIcon}
+                      onChange={e => setNewCatIcon(e.target.value)}
+                      className="input-field w-12 text-center px-1"
+                      maxLength={4}
+                      title="Emoji Icon"
+                    />
+                    <input
+                      type="text"
+                      value={newCatName}
+                      onChange={e => setNewCatName(e.target.value)}
+                      className="input-field flex-1 px-2"
+                      placeholder="Category name"
+                    />
+                    <input
+                      type="color"
+                      value={newCatColor}
+                      onChange={e => setNewCatColor(e.target.value)}
+                      className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0.5 bg-transparent shrink-0"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setShowAddCategory(false)} className="btn-secondary flex-1 py-1.5 text-xs">Cancel</button>
+                    <button type="button" onClick={handleAddCategory} disabled={addingCategory} className="btn-primary flex-1 py-1.5 text-xs">
+                      {addingCategory ? 'Adding...' : 'Save Category'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <select
+                  name="category_id"
+                  value={formData.category_id}
+                  onChange={handleChange}
+                  required
+                  className="input-field"
+                >
+                  <option value="">Select category</option>
+                  {localCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.icon} {cat.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
           {isIncome && (
