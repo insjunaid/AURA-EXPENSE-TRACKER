@@ -29,7 +29,7 @@
   <br/>
   <br/>
  
-  <img width="1000" height="550" alt="{8816823D-4345-41B5-A124-753510C29483}" src="https://github.com/user-attachments/assets/c4f3de05-7834-4ce3-9972-e6aa2fa28ac9" />
+  <img width="1000" height="550" alt="{371E8AC0-32AF-4624-8447-3C07D70604E0}" src="https://github.com/user-attachments/assets/961d246c-0ef8-4133-9079-2563cdeb9619" />
 
 </div>
 
