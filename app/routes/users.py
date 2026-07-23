@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.database import get_db
 from app.models import User
@@ -80,6 +81,14 @@ async def refresh_token(body: dict, db: AsyncSession = Depends(get_db)):
     payload = decode_token(token, expected_type="refresh")
     user_uuid = payload.get("sub")
 
+    # Verify user still exists
+    result = await db.execute(select(User).where(User.uuid == user_uuid))
+    if not result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User no longer exists.",
+        )
+
     new_access_token = create_access_token(data={"sub": user_uuid})
     return {"access_token": new_access_token, "token_type": "bearer"}
 
@@ -101,7 +110,13 @@ async def update_profile(
 
     if updates.name is not None:
         update_fields["name"] = updates.name
-    if updates.email is not None:
+    if updates.email is not None and updates.email != current_user.email:
+        existing = await get_user_by_email(db, updates.email)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already in use.",
+            )
         update_fields["email"] = updates.email
     if updates.currency is not None:
         update_fields["currency"] = updates.currency.value
