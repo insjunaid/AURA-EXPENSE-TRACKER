@@ -1,26 +1,34 @@
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ compact = false }) {
   const { isDark, toggleTheme } = useTheme();
+  const label = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+
+  if (compact) {
+    return (
+      <button onClick={toggleTheme} className="icon-btn" aria-label={label} title={label}>
+        {isDark ? <Sun size={19} strokeWidth={1.8} /> : <Moon size={19} strokeWidth={1.8} />}
+      </button>
+    );
+  }
 
   return (
     <button
-      id="theme-toggle"
       onClick={toggleTheme}
-      className="relative w-14 h-7 rounded-full bg-dark-200 dark:bg-dark-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-900"
-      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="relative inline-flex items-center h-8 w-[60px] rounded-full bg-surface-2 border border-line/70 transition"
+      aria-label={label}
+      title={label}
     >
-      {/* Track icons */}
-      <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs"><Sun size={12} className="text-amber-500" /></span>
-      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs"><Moon size={12} className="text-blue-400" /></span>
-
-      {/* Sliding dot */}
+      <Sun size={13} className="absolute left-2 text-muted" />
+      <Moon size={13} className="absolute right-2 text-muted" />
       <span
-        className={`absolute top-0.5 w-6 h-6 rounded-full bg-white dark:bg-dark-300 shadow-md transition-all duration-300 ${
-          isDark ? 'left-[calc(100%-1.625rem)]' : 'left-0.5'
+        className={`absolute top-[3px] w-6 h-6 rounded-full bg-surface shadow-soft border border-line/70 flex items-center justify-center transition-all duration-300 ${
+          isDark ? 'left-[31px]' : 'left-[3px]'
         }`}
-      />
+      >
+        {isDark ? <Moon size={12} className="text-ink" /> : <Sun size={12} className="text-ink" />}
+      </span>
     </button>
   );
 }

@@ -1,23 +1,21 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { LogoMark } from './ui/Logo';
+
+export function SplashScreen({ label = 'Loading your finances…' }) {
+  return (
+    <div className="min-h-dvh flex items-center justify-center bg-canvas">
+      <div className="flex flex-col items-center gap-5 animate-fade-in">
+        <LogoMark size={56} className="animate-pulse-dot" />
+        <p className="text-sm text-muted">{label}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-dark-50 dark:bg-dark-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-dark-500 dark:text-dark-400 font-medium">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
+  if (loading) return <SplashScreen />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return children;
 }

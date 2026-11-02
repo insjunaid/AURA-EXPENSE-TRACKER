@@ -61,9 +61,15 @@ app.include_router(analytics_router)
 app.include_router(investments_router)
 
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 async def health_check():
-    """Health check endpoint."""
+    """
+    Lightweight health / keep-alive endpoint.
+
+    Deliberately does NOT touch the database, so uptime pingers (UptimeRobot,
+    cron-job.org, GitHub Actions) keep the Render instance awake without
+    consuming Neon compute hours. Accepts HEAD because many monitors use it.
+    """
     return {"status": "healthy", "app": settings.APP_NAME, "version": settings.APP_VERSION}
 
 

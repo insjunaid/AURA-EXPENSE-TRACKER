@@ -1,46 +1,27 @@
-import { AlertTriangle, Lightbulb, CheckCircle, PiggyBank } from 'lucide-react';
+import { TriangleAlert, Lightbulb, CircleCheck, PiggyBank } from 'lucide-react';
+import { formatMoney } from '../lib/format';
 
-export default function SuggestionCard({ suggestion }) {
-  const typeStyles = {
-    warning: {
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
-      border: 'border-amber-200 dark:border-amber-800',
-      icon: <AlertTriangle size={20} />,
-      titleColor: 'text-amber-700 dark:text-amber-400',
-    },
-    info: {
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
-      border: 'border-blue-200 dark:border-blue-800',
-      icon: <Lightbulb size={20} />,
-      titleColor: 'text-blue-700 dark:text-blue-400',
-    },
-    success: {
-      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-      border: 'border-emerald-200 dark:border-emerald-800',
-      icon: <CheckCircle size={20} />,
-      titleColor: 'text-emerald-700 dark:text-emerald-400',
-    },
-  };
+const STYLES = {
+  warning: { icon: TriangleAlert, tone: 'bg-warn/10 text-warn' },
+  info: { icon: Lightbulb, tone: 'bg-surface-2 text-ink' },
+  success: { icon: CircleCheck, tone: 'bg-income/10 text-income' },
+};
 
-  const style = typeStyles[suggestion.type] || typeStyles.info;
-
+export default function SuggestionCard({ suggestion, currency = 'INR' }) {
+  const { icon: Icon, tone } = STYLES[suggestion.type] || STYLES.info;
   return (
-    <div className={`${style.bg} ${style.border} border rounded-xl p-4 animate-fade-in`}>
-      <div className="flex items-start gap-3">
-        <span className="text-xl shrink-0 mt-0.5">{style.icon}</span>
-        <div className="flex-1">
-          <h4 className={`font-semibold text-sm ${style.titleColor} mb-1`}>
-            {suggestion.title}
-          </h4>
-          <p className="text-sm text-dark-600 dark:text-dark-300">
-            {suggestion.message}
+    <div className="card p-4 flex gap-3.5">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${tone}`}>
+        <Icon size={19} strokeWidth={1.9} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="text-[14.5px] font-semibold tracking-tight">{suggestion.title}</h4>
+        <p className="text-[13.5px] text-ink-2 mt-1 leading-relaxed">{suggestion.message}</p>
+        {suggestion.potential_savings > 0 && (
+          <p className="mt-2.5 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-income">
+            <PiggyBank size={14} /> Could save {formatMoney(suggestion.potential_savings, currency, { decimals: 0 })}
           </p>
-          {suggestion.potential_savings > 0 && (
-            <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              <PiggyBank size={14} className="inline mr-1" /> Potential savings: ₹{suggestion.potential_savings.toLocaleString('en-IN')}
-            </p>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

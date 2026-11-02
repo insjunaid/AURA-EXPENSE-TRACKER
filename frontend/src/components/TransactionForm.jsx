@@ -1,335 +1,310 @@
-import { useState, useEffect } from 'react';
-import { categoryAPI } from '../services/api';
+import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2, Check, CalendarDays, X } from 'lucide-react';
+import Sheet from './ui/Sheet';
+import CategoryIcon from './CategoryIcon';
+import { categoryAPI, errorMessage } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { currencySymbol, todayISO } from '../lib/format';
+import { TYPES, PAYMENT_MODES, INCOME_SOURCES, ASSET_TYPES } from '../lib/transactionTypes';
+
+const CATEGORY_COLORS = ['#0f766e', '#2563eb', '#7c3aed', '#db2777', '#ea580c', '#ca8a04', '#16a34a', '#475569'];
 
 export default function TransactionForm({
-  type = 'expense', // 'expense', 'income', or 'investment'
+  type = 'expense',
   categories = [],
   initialData = null,
   onSubmit,
+  onDelete,
   onClose,
+  onCategoryCreated,
 }) {
+  const { user } = useAuth();
+  const cfg = TYPES[type];
   const isEdit = !!initialData;
   const isExpense = type === 'expense';
   const isIncome = type === 'income';
-  const isInvestment = type === 'investment';
+  const amountRef = useRef(null);
 
-  const [localCategories, setLocalCategories] = useState(categories);
-  const [showAddCategory, setShowAddCategory] = useState(false);
-  const [newCatName, setNewCatName] = useState('');
-  const [newCatIcon, setNewCatIcon] = useState('📦');
-  const [newCatColor, setNewCatColor] = useState('#6366f1');
-  const [addingCategory, setAddingCategory] = useState(false);
-
-  const [formData, setFormData] = useState({
-    amount: '',
-    source: '',
-    category_id: '',
-    asset_type: '',
-    payment_mode: '',
-    date_credited: new Date().toISOString().split('T')[0],
-    date_spent: new Date().toISOString().split('T')[0],
-    date_invested: new Date().toISOString().split('T')[0],
-    notes: '',
-  });
+  const [open, setOpen] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState(() => ({
+    amount: initialData?.amount != null ? String(initialData.amount) : '',
+    category_id: initialData?.category?.id ?? null,
+    source: initialData?.source || '',
+    asset_type: initialData?.asset_type || '',
+    payment_mode: initialData?.payment_mode || '',
+    date: initialData?.[cfg.dateField] || todayISO(),
+    notes: initialData?.notes || '',
+  }));
+
+  // New-category mini form
+  const [addingCat, setAddingCat] = useState(false);
+  const [newCat, setNewCat] = useState({ name: '', icon: '📦', color: CATEGORY_COLORS[0] });
+  const [savingCat, setSavingCat] = useState(false);
 
   useEffect(() => {
-    setLocalCategories(categories);
-  }, [categories]);
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        amount: initialData.amount?.toString() || '',
-        source: initialData.source || '',
-        category_id: initialData.category?.id?.toString() || '',
-        asset_type: initialData.asset_type || '',
-        payment_mode: initialData.payment_mode || '',
-        date_credited: initialData.date_credited || new Date().toISOString().split('T')[0],
-        date_spent: initialData.date_spent || new Date().toISOString().split('T')[0],
-        date_invested: initialData.date_invested || new Date().toISOString().split('T')[0],
-        notes: initialData.notes || '',
-      });
+    // Focus amount on open for new entries (desktop only — avoids the mobile
+    // keyboard covering the sheet before it finishes animating)
+    if (!isEdit && window.matchMedia('(min-width: 640px)').matches) {
+      setTimeout(() => amountRef.current?.focus(), 200);
     }
-  }, [initialData]);
+  }, [isEdit]);
 
-  const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+
+  const close = () => {
+    setOpen(false);
+    setTimeout(onClose, 220); // let the exit animation play
   };
 
-  const handleAddCategory = async (e) => {
-    e.preventDefault();
-    if (!newCatName.trim()) return;
-    setAddingCategory(true);
+  const handleAmount = (e) => {
+    // digits + one decimal point, max 2 decimals
+    let v = e.target.value.replace(/[^\d.]/g, '');
+    const [int, ...rest] = v.split('.');
+    v = rest.length ? `${int}.${rest.join('').slice(0, 2)}` : int;
+    set('amount', v.slice(0, 12));
+  };
+
+  const saveCategory = async () => {
+    if (!newCat.name.trim()) return toast.error('Give the category a name');
+    setSavingCat(true);
     try {
-      const res = await categoryAPI.create({ name: newCatName, icon: newCatIcon, color: newCatColor });
-      toast.success('Category added!');
-      setLocalCategories(prev => [...prev, res.data]);
-      setFormData(prev => ({ ...prev, category_id: res.data.id.toString() }));
-      setShowAddCategory(false);
-      setNewCatName('');
+      const res = await categoryAPI.create({ name: newCat.name.trim(), icon: newCat.icon || '📦', color: newCat.color });
+      onCategoryCreated?.(res.data);
+      set('category_id', res.data.id);
+      setAddingCat(false);
+      setNewCat({ name: '', icon: '📦', color: CATEGORY_COLORS[0] });
+      toast.success('Category created');
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to add category');
+      toast.error(errorMessage(err, 'Could not create category'));
     } finally {
-      setAddingCategory(false);
+      setSavingCat(false);
     }
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
+    const amount = parseFloat(form.amount);
+    if (!amount || amount <= 0) { amountRef.current?.focus(); return toast.error('Enter an amount'); }
+    if (isExpense && !form.category_id) return toast.error('Pick a category');
+    if (isIncome && !form.source.trim()) return toast.error('Add an income source');
+    if (type === 'investment' && !form.asset_type.trim()) return toast.error('Add an asset type');
+
+    const base = { amount, notes: form.notes.trim() || null, [cfg.dateField]: form.date };
+    const payload = isExpense
+      ? { ...base, category_id: Number(form.category_id), payment_mode: form.payment_mode || null }
+      : isIncome
+        ? { ...base, source: form.source.trim() }
+        : { ...base, asset_type: form.asset_type.trim() };
+
     setSubmitting(true);
     try {
-      let payload;
-      if (isExpense) {
-        payload = {
-          amount: parseFloat(formData.amount),
-          category_id: parseInt(formData.category_id),
-          date_spent: formData.date_spent,
-          payment_mode: formData.payment_mode || null,
-          notes: formData.notes || null,
-        };
-      } else if (isIncome) {
-        payload = {
-          amount: parseFloat(formData.amount),
-          source: formData.source,
-          date_credited: formData.date_credited,
-          notes: formData.notes || null,
-        };
-      } else if (isInvestment) {
-        payload = {
-          amount: parseFloat(formData.amount),
-          asset_type: formData.asset_type,
-          date_invested: formData.date_invested,
-          notes: formData.notes || null,
-        };
-      }
-      
       await onSubmit(payload);
-      onClose();
-    } catch (err) {
-      console.error(err);
+      close();
+    } catch {
+      /* error toast shown by caller; keep the sheet open */
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+  const textPresets = isIncome ? INCOME_SOURCES : ASSET_TYPES;
+  const textKey = isIncome ? 'source' : 'asset_type';
 
-      {/* Modal */}
-      <div className="relative w-full max-w-md bg-white dark:bg-dark-800 rounded-2xl shadow-2xl p-6 modal-content max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-dark-900 dark:text-white">
-            {isEdit ? 'Edit' : 'Add'} {isExpense ? 'Expense' : isIncome ? 'Income' : 'Investment'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl hover:bg-dark-100 dark:hover:bg-dark-700 transition-colors"
-          >
-            <svg className="w-5 h-5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+  return (
+    <Sheet
+      open={open}
+      onClose={close}
+      title={`${isEdit ? 'Edit' : 'New'} ${cfg.label.toLowerCase()}`}
+      footer={
+        <div className="flex gap-3">
+          {isEdit && onDelete && (
+            <button type="button" onClick={onDelete} className="btn-secondary !px-4 text-expense" aria-label="Delete">
+              <Trash2 size={18} />
+            </button>
+          )}
+          <button type="submit" form="txn-form" disabled={submitting} className="btn-primary flex-1">
+            {submitting ? (
+              <><span className="w-4 h-4 border-2 border-canvas/40 border-t-canvas rounded-full animate-spin" /> Saving…</>
+            ) : (
+              <><Check size={18} /> {isEdit ? 'Save changes' : `Add ${cfg.label.toLowerCase()}`}</>
+            )}
           </button>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Amount */}
-          <div>
-            <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
-              Amount *
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400 font-semibold">₹</span>
-              <input
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                placeholder="0.00"
-                step="0.01"
-                min="0.01"
-                required
-                className="input-field pl-8"
-              />
-            </div>
-          </div>
-
-          {/* Source / Category / Asset Type */}
-          {isExpense && (
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300">
-                  Category *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowAddCategory(!showAddCategory)}
-                  className="text-xs text-primary-500 hover:text-primary-600 flex items-center gap-1 font-medium"
-                >
-                  <Plus size={14} /> Add New
-                </button>
-              </div>
-
-              {showAddCategory ? (
-                <div className="p-3 border border-dark-200 dark:border-dark-700 rounded-xl bg-dark-50 dark:bg-dark-800/50 space-y-3 mb-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newCatIcon}
-                      onChange={e => setNewCatIcon(e.target.value)}
-                      className="input-field w-12 text-center px-1"
-                      maxLength={4}
-                      title="Emoji Icon"
-                    />
-                    <input
-                      type="text"
-                      value={newCatName}
-                      onChange={e => setNewCatName(e.target.value)}
-                      className="input-field flex-1 px-2"
-                      placeholder="Category name"
-                    />
-                    <input
-                      type="color"
-                      value={newCatColor}
-                      onChange={e => setNewCatColor(e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0.5 bg-transparent shrink-0"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => setShowAddCategory(false)} className="btn-secondary flex-1 py-1.5 text-xs">Cancel</button>
-                    <button type="button" onClick={handleAddCategory} disabled={addingCategory} className="btn-primary flex-1 py-1.5 text-xs">
-                      {addingCategory ? 'Adding...' : 'Save Category'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <select
-                  name="category_id"
-                  value={formData.category_id}
-                  onChange={handleChange}
-                  required
-                  className="input-field"
-                >
-                  <option value="">Select category</option>
-                  {localCategories.map(cat => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.icon} {cat.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          )}
-          {isIncome && (
-            <div>
-              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
-                Source *
-              </label>
-              <input
-                type="text"
-                name="source"
-                value={formData.source}
-                onChange={handleChange}
-                placeholder="e.g., Salary, Freelance, Bonus"
-                required
-                className="input-field"
-              />
-            </div>
-          )}
-          {isInvestment && (
-            <div>
-              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
-                Asset Type *
-              </label>
-              <input
-                type="text"
-                name="asset_type"
-                value={formData.asset_type}
-                onChange={handleChange}
-                placeholder="e.g., Stocks, Crypto, Mutual Funds"
-                required
-                className="input-field"
-              />
-            </div>
-          )}
-
-          {/* Date */}
-          <div>
-            <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
-              Date *
-            </label>
+      }
+    >
+      <form id="txn-form" onSubmit={handleSubmit} className="space-y-6 pb-2">
+        {/* Amount */}
+        <div className="pt-2 pb-1 text-center">
+          <label htmlFor="txn-amount" className="eyebrow">Amount</label>
+          <div className="mt-2 flex items-baseline justify-center gap-1">
+            <span className={`font-display text-4xl ${form.amount ? 'text-ink' : 'text-muted'}`}>{currencySymbol(user?.currency)}</span>
             <input
-              type="date"
-              name={isExpense ? 'date_spent' : isIncome ? 'date_credited' : 'date_invested'}
-              value={isExpense ? formData.date_spent : isIncome ? formData.date_credited : formData.date_invested}
-              onChange={handleChange}
-              required
-              className="input-field"
+              ref={amountRef}
+              id="txn-amount"
+              inputMode="decimal"
+              autoComplete="off"
+              value={form.amount}
+              onChange={handleAmount}
+              placeholder="0"
+              className="bg-transparent font-display text-6xl leading-none tracking-tight text-ink placeholder:text-muted/60 outline-none tabular text-left max-w-[75vw]"
+              style={{ width: `${Math.max(1, form.amount.length) * 0.92 + 0.2}ch` }}
+              aria-label="Amount"
             />
           </div>
+        </div>
 
-          {/* Payment Mode (expenses only, optional) */}
-          {isExpense && (
-            <div>
-              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
-                Payment Mode <span className="text-dark-400">(optional)</span>
-              </label>
-              <select
-                name="payment_mode"
-                value={formData.payment_mode}
-                onChange={handleChange}
-                className="input-field"
-              >
-                <option value="">Select mode</option>
-                <option value="Cash">Cash</option>
-                <option value="UPI">UPI</option>
-                <option value="Credit Card">Credit Card</option>
-                <option value="Debit Card">Debit Card</option>
-                <option value="Net Banking">Net Banking</option>
-                <option value="Wallet">Wallet</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          )}
-
-          {/* Notes */}
+        {/* Category (expenses) */}
+        {isExpense && (
           <div>
-            <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
-              Notes <span className="text-dark-400">(optional)</span>
-            </label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Add a note..."
-              rows={2}
-              className="input-field resize-none"
+            <div className="flex items-center justify-between mb-3">
+              <span className="field-label !mb-0">Category</span>
+              {!addingCat && (
+                <button type="button" onClick={() => setAddingCat(true)} className="text-[13px] font-medium text-ink-2 hover:text-ink inline-flex items-center gap-1">
+                  <Plus size={14} /> New
+                </button>
+              )}
+            </div>
+
+            {addingCat && (
+              <div className="mb-3 p-3 rounded-2xl bg-surface-2/70 space-y-3 animate-fade-in">
+                <div className="flex gap-2">
+                  <input
+                    value={newCat.icon}
+                    onChange={(e) => setNewCat((c) => ({ ...c, icon: e.target.value }))}
+                    className="field !w-14 text-center !px-0 !bg-surface"
+                    maxLength={4}
+                    aria-label="Emoji"
+                  />
+                  <input
+                    value={newCat.name}
+                    onChange={(e) => setNewCat((c) => ({ ...c, name: e.target.value }))}
+                    className="field flex-1 !bg-surface"
+                    placeholder="Category name"
+                    maxLength={100}
+                    autoFocus
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  {CATEGORY_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setNewCat((n) => ({ ...n, color: c }))}
+                      className={`w-7 h-7 rounded-full transition ${newCat.color === c ? 'ring-2 ring-offset-2 ring-ink ring-offset-surface-2 scale-110' : ''}`}
+                      style={{ backgroundColor: c }}
+                      aria-label={`Colour ${c}`}
+                    />
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setAddingCat(false)} className="btn-ghost !h-10 flex-1"><X size={16} /> Cancel</button>
+                  <button type="button" onClick={saveCategory} disabled={savingCat} className="btn-primary !h-10 flex-1">
+                    {savingCat ? 'Saving…' : 'Create'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {categories.map((cat) => {
+                const active = String(form.category_id) === String(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => set('category_id', cat.id)}
+                    aria-pressed={active}
+                    className={`flex flex-col items-center gap-1.5 py-3 px-1 rounded-2xl border transition active:scale-95
+                      ${active ? 'border-ink bg-surface-2 shadow-soft' : 'border-line/70 hover:border-ink/30'}`}
+                  >
+                    <CategoryIcon type="expense" name={cat.name} emoji={cat.icon} color={cat.color} size="sm" />
+                    <span className={`text-[11.5px] leading-tight text-center line-clamp-2 ${active ? 'text-ink font-semibold' : 'text-ink-2'}`}>
+                      {cat.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Source / asset type */}
+        {!isExpense && (
+          <div>
+            <label htmlFor="txn-text" className="field-label">{isIncome ? 'Source' : 'Asset type'}</label>
+            <input
+              id="txn-text"
+              value={form[textKey]}
+              onChange={(e) => set(textKey, e.target.value)}
+              placeholder={isIncome ? 'e.g. Salary' : 'e.g. Mutual Funds'}
+              maxLength={100}
+              className="field"
+            />
+            <div className="rail mt-3">
+              {textPresets.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => set(textKey, p)}
+                  className={`chip ${form[textKey] === p ? 'chip-active' : ''}`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Payment mode */}
+        {isExpense && (
+          <div>
+            <span className="field-label">Paid with <span className="text-muted font-normal">· optional</span></span>
+            <div className="rail">
+              {PAYMENT_MODES.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => set('payment_mode', form.payment_mode === m ? '' : m)}
+                  className={`chip ${form.payment_mode === m ? 'chip-active' : ''}`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Date */}
+        <div>
+          <label htmlFor="txn-date" className="field-label">Date</label>
+          <div className="relative">
+            <CalendarDays size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+            <input
+              id="txn-date"
+              type="date"
+              value={form.date}
+              onChange={(e) => set('date', e.target.value)}
+              required
+              className="field pl-11"
             />
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1">
-              Cancel
-            </button>
-            <button type="submit" disabled={submitting} className="btn-primary flex-1">
-              {submitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Saving...
-                </span>
-              ) : (
-                isEdit ? 'Update' : 'Add'
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Notes */}
+        <div>
+          <label htmlFor="txn-notes" className="field-label">Note <span className="text-muted font-normal">· optional</span></label>
+          <textarea
+            id="txn-notes"
+            value={form.notes}
+            onChange={(e) => set('notes', e.target.value)}
+            placeholder="Add a short note"
+            rows={2}
+            className="field"
+          />
+        </div>
+      </form>
+    </Sheet>
   );
 }

@@ -1,193 +1,165 @@
-import { useState } from 'react';
-import { CreditCard, Wallet, Package, Banknote, TrendingUp } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Search, ArrowDownWideNarrow, CalendarDays, Trash2, ChevronRight, X } from 'lucide-react';
+import CategoryIcon from './CategoryIcon';
+import Money from './ui/Money';
+import EmptyState from './ui/EmptyState';
+import { TYPES } from '../lib/transactionTypes';
+import { relativeDayLabel, parseISODate } from '../lib/format';
 
-export default function TransactionList({
-  transactions = [],
-  type = 'expense', // 'expense' or 'income'
-  currency = '₹',
-  onEdit,
-  onDelete,
-}) {
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('date'); // 'date', 'amount'
-  const [sortDir, setSortDir] = useState('desc');
+/** One tappable transaction row (tap → edit). */
+export function TransactionRow({ t, type, currency, onOpen, onDelete, showDate = false }) {
+  const cfg = TYPES[type];
+  const meta = [
+    showDate && relativeDayLabel(t[cfg.dateField]),
+    type === 'expense' && t.payment_mode,
+    t.notes,
+  ].filter(Boolean).join(' · ');
 
-  const isExpense = type === 'expense';
-  const isIncome = type === 'income';
-  const isInvestment = type === 'investment';
+  return (
+    <div className="group relative flex items-center">
+      <button
+        onClick={() => onOpen?.(t)}
+        className="flex-1 min-w-0 flex items-center gap-3 px-3 py-3 rounded-2xl text-left
+          hover:bg-surface-2/70 active:bg-surface-2 transition-colors"
+      >
+        <CategoryIcon type={type} name={cfg.titleOf(t)} emoji={t.category?.icon} color={t.category?.color} />
+        <div className="flex-1 min-w-0">
+          <p className="text-[15px] font-medium text-ink truncate">{cfg.titleOf(t)}</p>
+          {meta && <p className="text-[12.5px] text-muted truncate mt-0.5">{meta}</p>}
+        </div>
+        <Money
+          value={t.amount}
+          currency={currency}
+          sign={cfg.sign}
+          className={`text-[15px] font-semibold shrink-0 ${type === 'expense' ? 'text-ink' : type === 'income' ? 'text-income' : 'text-ink'}`}
+        />
+        <ChevronRight size={16} className="text-muted/60 shrink-0 -mr-1 lg:hidden" />
+      </button>
+      {onDelete && (
+        <button
+          onClick={() => onDelete(t)}
+          className="hidden lg:flex absolute right-2 opacity-0 group-hover:opacity-100 focus:opacity-100 w-9 h-9 items-center justify-center rounded-xl
+            bg-surface border border-line text-muted hover:text-expense hover:border-expense/40 transition"
+          aria-label="Delete"
+          title="Delete"
+        >
+          <Trash2 size={15} />
+        </button>
+      )}
+    </div>
+  );
+}
 
-  // Filter
-  const filtered = transactions.filter(t => {
-    const term = search.toLowerCase();
-    if (isExpense) {
-      return (
-        t.category?.name?.toLowerCase().includes(term) ||
-        t.notes?.toLowerCase().includes(term) ||
-        t.amount?.toString().includes(term)
-      );
-    } else if (isIncome) {
-      return (
-        t.source?.toLowerCase().includes(term) ||
-        t.notes?.toLowerCase().includes(term) ||
-        t.amount?.toString().includes(term)
-      );
-    } else {
-      return (
-        t.asset_type?.toLowerCase().includes(term) ||
-        t.notes?.toLowerCase().includes(term) ||
-        t.amount?.toString().includes(term)
-      );
-    }
-  });
+/**
+ * Searchable list grouped by day ("Today", "Yesterday", "Mon, 3 Nov"),
+ * with day subtotals and a sort toggle.
+ */
+export default function TransactionList({ transactions = [], type = 'expense', currency = 'INR', onOpen, onDelete, onAdd }) {
+  const cfg = TYPES[type];
+  const [query, setQuery] = useState('');
+  const [sortBy, setSortBy] = useState('date'); // date | amount
 
-  // Sort
-  const sorted = [...filtered].sort((a, b) => {
-    const dateField = isExpense ? 'date_spent' : isIncome ? 'date_credited' : 'date_invested';
-    if (sortBy === 'date') {
-      return sortDir === 'desc'
-        ? new Date(b[dateField]) - new Date(a[dateField])
-        : new Date(a[dateField]) - new Date(b[dateField]);
-    }
-    return sortDir === 'desc' ? b.amount - a.amount : a.amount - b.amount;
-  });
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = q
+      ? transactions.filter((t) =>
+          [cfg.titleOf(t), t.notes, t.payment_mode, String(t.amount)].some((v) => v?.toLowerCase().includes(q)))
+      : transactions;
+    return [...list].sort((a, b) =>
+      sortBy === 'amount'
+        ? b.amount - a.amount
+        : parseISODate(b[cfg.dateField]) - parseISODate(a[cfg.dateField]) || new Date(b.created_at) - new Date(a.created_at));
+  }, [transactions, query, sortBy, cfg]);
 
-  const toggleSort = (field) => {
-    if (sortBy === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortBy(field); setSortDir('desc'); }
-  };
+  const groups = useMemo(() => {
+    if (sortBy !== 'date') return [{ key: 'all', label: null, items: filtered }];
+    const map = new Map();
+    filtered.forEach((t) => {
+      const k = t[cfg.dateField];
+      if (!map.has(k)) map.set(k, []);
+      map.get(k).push(t);
+    });
+    return [...map.entries()].map(([k, items]) => ({
+      key: k,
+      label: relativeDayLabel(k),
+      total: items.reduce((s, x) => s + x.amount, 0),
+      items,
+    }));
+  }, [filtered, sortBy, cfg]);
 
   if (transactions.length === 0) {
     return (
-      <div className="glass-card p-12 text-center">
-        <div className="text-6xl mb-4">{isExpense ? <CreditCard size={48} className="mx-auto text-dark-300" /> : <Wallet size={48} className="mx-auto text-dark-300" />}</div>
-        <h3 className="text-lg font-semibold text-dark-700 dark:text-dark-300 mb-2">
-          No {isExpense ? 'expenses' : isIncome ? 'income' : 'investments'} yet
-        </h3>
-        <p className="text-sm text-dark-500 dark:text-dark-400">
-          Start tracking by adding your first {isExpense ? 'expense' : isIncome ? 'income entry' : 'investment'}.
-        </p>
-      </div>
+      <EmptyState
+        type={type}
+        title={`No ${cfg.plural.toLowerCase()} this month`}
+        message={`Tap below to add your first ${cfg.label.toLowerCase()}.`}
+        action={onAdd && <button className="btn-primary" onClick={onAdd}>Add {cfg.label.toLowerCase()}</button>}
+      />
     );
   }
 
   return (
-    <div className="glass-card overflow-hidden">
-      {/* Search & Sort bar */}
-      <div className="p-4 border-b border-dark-200 dark:border-dark-700 flex flex-col sm:flex-row gap-3">
+    <div className="space-y-4">
+      {/* Search + sort */}
+      <div className="flex gap-2">
         <div className="relative flex-1">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
-            type="text"
-            placeholder="Search transactions..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="input-field pl-10 py-2 text-sm"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search"
+            className="field pl-11 pr-10 !bg-surface border-line/70"
+            aria-label={`Search ${cfg.plural.toLowerCase()}`}
           />
+          {query && (
+            <button onClick={() => setQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-muted hover:text-ink" aria-label="Clear search">
+              <X size={16} />
+            </button>
+          )}
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => toggleSort('date')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-              sortBy === 'date'
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                : 'bg-dark-100 dark:bg-dark-700 text-dark-600 dark:text-dark-400'
-            }`}
-          >
-            Date {sortBy === 'date' && (sortDir === 'desc' ? '↓' : '↑')}
-          </button>
-          <button
-            onClick={() => toggleSort('amount')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-              sortBy === 'amount'
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                : 'bg-dark-100 dark:bg-dark-700 text-dark-600 dark:text-dark-400'
-            }`}
-          >
-            Amount {sortBy === 'amount' && (sortDir === 'desc' ? '↓' : '↑')}
-          </button>
-        </div>
+        <button
+          onClick={() => setSortBy((s) => (s === 'date' ? 'amount' : 'date'))}
+          className="h-12 px-4 rounded-2xl bg-surface border border-line/70 text-[13px] font-medium text-ink-2 hover:text-ink inline-flex items-center gap-2 shrink-0"
+          aria-label={`Sort by ${sortBy === 'date' ? 'amount' : 'date'}`}
+        >
+          {sortBy === 'date' ? <CalendarDays size={16} /> : <ArrowDownWideNarrow size={16} />}
+          <span className="hidden sm:inline">{sortBy === 'date' ? 'Newest' : 'Largest'}</span>
+        </button>
       </div>
 
-      {/* Transaction list */}
-      <div className="divide-y divide-dark-100 dark:divide-dark-700/50">
-        {sorted.map((t, i) => (
-          <div
-            key={t.uuid}
-            className="flex items-center gap-4 p-4 hover:bg-dark-50 dark:hover:bg-dark-700/30 transition-colors animate-fade-in"
-            style={{ animationDelay: `${i * 50}ms` }}
-          >
-            {/* Category/Source icon */}
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-              style={{
-                backgroundColor: isExpense
-                  ? `${t.category?.color}20`
-                  : isIncome ? '#22c55e20' : '#8b5cf620',
-              }}
-            >
-              {isExpense ? (t.category?.icon || <Package size={18} />) : isIncome ? <Banknote size={18} /> : <TrendingUp size={18} />}
-            </div>
-
-            {/* Details */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-dark-900 dark:text-white truncate">
-                {isExpense ? t.category?.name : isIncome ? t.source : t.asset_type}
-              </p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-xs text-dark-500 dark:text-dark-400">
-                  {new Date(isExpense ? t.date_spent : isIncome ? t.date_credited : t.date_invested).toLocaleDateString('en-IN', {
-                    day: 'numeric', month: 'short', year: 'numeric'
-                  })}
-                </p>
-                {isExpense && t.payment_mode && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-dark-100 dark:bg-dark-700 text-dark-600 dark:text-dark-300 font-medium">
-                    {t.payment_mode}
-                  </span>
-                )}
-                {t.notes && (
-                  <p className="text-xs text-dark-400 dark:text-dark-500 truncate max-w-[150px]">
-                    • {t.notes}
-                  </p>
-                )}
+      {filtered.length === 0 ? (
+        <p className="text-center text-sm text-muted py-10">No matches for “{query}”.</p>
+      ) : (
+        <div className="space-y-4">
+          {groups.map((g) => (
+            <section key={g.key} className="card p-1.5">
+              {g.label && (
+                <header className="flex items-center justify-between px-3 pt-2.5 pb-1">
+                  <h3 className="eyebrow">{g.label}</h3>
+                  <Money value={g.total} currency={currency} className="text-[12px] text-muted" />
+                </header>
+              )}
+              <div>
+                {g.items.map((t) => (
+                  <TransactionRow
+                    key={t.uuid}
+                    t={t}
+                    type={type}
+                    currency={currency}
+                    onOpen={onOpen}
+                    onDelete={onDelete}
+                    showDate={sortBy !== 'date'}
+                  />
+                ))}
               </div>
-            </div>
-
-            {/* Amount */}
-            <p className={`text-sm font-bold shrink-0 ${isExpense ? 'text-red-500' : isIncome ? 'text-emerald-500' : 'text-purple-500'}`}>
-              {isExpense ? '-' : '+'}{currency}{t.amount?.toLocaleString('en-IN')}
-            </p>
-
-            {/* Actions */}
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                onClick={() => onEdit(t)}
-                className="p-2 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-700 transition-colors text-dark-400 hover:text-primary-500"
-                title="Edit"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => onDelete(t.uuid)}
-                className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-dark-400 hover:text-red-500"
-                title="Delete"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Results count */}
-      <div className="px-4 py-3 border-t border-dark-100 dark:border-dark-700/50 text-xs text-dark-500 dark:text-dark-400">
-        {sorted.length} of {transactions.length} transactions
-      </div>
+            </section>
+          ))}
+          <p className="text-center text-[12px] text-muted">
+            {filtered.length} of {transactions.length} {transactions.length === 1 ? 'entry' : 'entries'}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
