@@ -24,6 +24,11 @@ engine = create_async_engine(
     db_url,
     echo=settings.DEBUG,
     connect_args=connect_args,
+    # Neon suspends idle compute and drops connections. pre_ping validates a
+    # pooled connection before use (reconnecting transparently if it died),
+    # and recycle retires connections before Neon's idle timeout kills them.
+    pool_pre_ping=True,
+    pool_recycle=300,
 )
 
 # Session factory

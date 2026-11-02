@@ -19,7 +19,9 @@ class Settings(BaseSettings):
     # App
     APP_NAME: str = "Expense Tracker"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    # SQL echo logging. Off by default (it slows every request and floods
+    # Render logs). Set DEBUG=true in a local .env when you want to see SQL.
+    DEBUG: bool = False
 
     # CORS
     FRONTEND_URL: str = "http://localhost:5173"

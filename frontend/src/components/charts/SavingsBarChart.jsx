@@ -1,109 +1,59 @@
 import { Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS, CategoryScale, LinearScale,
-  BarElement, Tooltip, Legend,
-} from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip } from 'chart.js';
+import { ChartNoAxesColumn } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
-import { BarChart3 } from 'lucide-react';
+import { chartTheme, baseTooltip } from '../../lib/chartTheme';
+import { formatMoney, formatCompact } from '../../lib/format';
+import ChartLegend from './ChartLegend';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
-export default function SavingsBarChart({ trends = [] }) {
+export default function SavingsBarChart({ trends = [], currency = 'INR' }) {
   const { isDark } = useTheme();
+  const t = chartTheme(isDark);
 
   if (trends.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-dark-400 dark:text-dark-500">
-        <div className="text-center">
-          <p className="text-4xl mb-2"><BarChart3 size={40} className="mx-auto" /></p>
-          <p className="text-sm">No trend data available</p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-56 text-muted text-sm gap-3">
+        <ChartNoAxesColumn size={22} /> No trend data yet
       </div>
     );
   }
 
+  const bar = { borderRadius: 6, borderSkipped: false, maxBarThickness: 14, categoryPercentage: 0.7, barPercentage: 0.85 };
   const data = {
-    labels: trends.map(t => t.label),
+    labels: trends.map((x) => String(x.label).split(" ")[0].slice(0, 3)),
     datasets: [
-      {
-        label: 'Income',
-        data: trends.map(t => t.total_income),
-        backgroundColor: isDark ? 'rgba(34, 197, 94, 0.7)' : 'rgba(34, 197, 94, 0.8)',
-        borderRadius: 8,
-        borderSkipped: false,
-      },
-      {
-        label: 'Expenses',
-        data: trends.map(t => t.total_expenses),
-        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.7)' : 'rgba(239, 68, 68, 0.8)',
-        borderRadius: 8,
-        borderSkipped: false,
-      },
-      {
-        label: 'Savings',
-        data: trends.map(t => t.savings),
-        backgroundColor: isDark ? 'rgba(99, 102, 241, 0.7)' : 'rgba(99, 102, 241, 0.8)',
-        borderRadius: 8,
-        borderSkipped: false,
-      },
+      { label: 'Income', data: trends.map((x) => x.total_income), backgroundColor: t.income, ...bar },
+      { label: 'Expenses', data: trends.map((x) => x.total_expenses), backgroundColor: t.expense, ...bar },
+      { label: 'Savings', data: trends.map((x) => x.savings), backgroundColor: t.ink, ...bar },
     ],
   };
 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
     scales: {
-      x: {
-        grid: { display: false },
-        ticks: {
-          color: isDark ? '#64748b' : '#94a3b8',
-          font: { family: 'Inter', size: 11 },
-        },
-      },
+      x: { grid: { display: false }, border: { display: false }, ticks: { color: t.tick, font: { family: 'Geist', size: 11 } } },
       y: {
-        grid: {
-          color: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(226, 232, 240, 0.5)',
-          drawBorder: false,
-        },
-        ticks: {
-          color: isDark ? '#64748b' : '#94a3b8',
-          font: { family: 'Inter', size: 11 },
-          callback: (value) => `₹${(value / 1000).toFixed(0)}k`,
-        },
+        grid: { color: t.grid }, border: { display: false },
+        ticks: { color: t.tick, font: { family: 'Geist', size: 11 }, maxTicksLimit: 5, callback: (v) => formatCompact(v, currency) },
       },
     },
     plugins: {
-      legend: {
-        position: 'top',
-        align: 'end',
-        labels: {
-          color: isDark ? '#cbd5e1' : '#475569',
-          font: { family: 'Inter', size: 12, weight: '500' },
-          padding: 16,
-          usePointStyle: true,
-          pointStyleWidth: 10,
-        },
-      },
-      tooltip: {
-        backgroundColor: isDark ? '#334155' : '#1e293b',
-        titleFont: { family: 'Inter', weight: '600' },
-        bodyFont: { family: 'Inter' },
-        padding: 12,
-        cornerRadius: 12,
-        callbacks: {
-          label: (context) => ` ${context.dataset.label}: ₹${context.raw.toLocaleString('en-IN')}`,
-        },
-      },
+      legend: { display: false },
+      tooltip: { ...baseTooltip(t), callbacks: { label: (c) => ` ${c.dataset.label}: ${formatMoney(c.raw, currency)}` } },
     },
-    animation: {
-      duration: 1000,
-      easing: 'easeOutQuart',
-    },
+    animation: { duration: 700, easing: 'easeOutQuart' },
   };
 
   return (
-    <div className="h-80">
-      <Bar data={data} options={options} />
+    <div>
+      <ChartLegend items={[['Income', t.income], ['Expenses', t.expense], ['Savings', t.ink]]} />
+      <div className="h-60 sm:h-72 mt-3">
+        <Bar data={data} options={options} />
+      </div>
     </div>
   );
 }

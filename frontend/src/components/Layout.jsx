@@ -1,164 +1,249 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import {
+  House, Receipt, Wallet, TrendingUp, ChartPie, UserRound, LogOut, Plus,
+  LayoutGrid, ChevronRight, Moon, Sun,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useUI } from '../context/UIContext';
+import { useTheme } from '../context/ThemeContext';
+import Logo, { LogoMark } from './ui/Logo';
+import Sheet from './ui/Sheet';
 import ThemeToggle from './ThemeToggle';
-import { LayoutDashboard, Wallet, CreditCard, TrendingUp, Search, User, LogOut, Hand } from 'lucide-react';
 
-const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+const NAV = [
+  { path: '/dashboard', label: 'Home', icon: House },
+  { path: '/expenses', label: 'Expenses', icon: Receipt },
   { path: '/income', label: 'Income', icon: Wallet },
-  { path: '/expenses', label: 'Expenses', icon: CreditCard },
   { path: '/investments', label: 'Investments', icon: TrendingUp },
-  { path: '/analytics', label: 'Analytics', icon: Search },
-  { path: '/profile', label: 'Profile', icon: User },
+  { path: '/analytics', label: 'Analytics', icon: ChartPie },
+  { path: '/profile', label: 'Profile', icon: UserRound },
 ];
+
+const MORE_PATHS = ['/investments', '/analytics', '/profile'];
+
+function Avatar({ name, size = 'md' }) {
+  const s = size === 'sm' ? 'w-9 h-9 text-[13px]' : 'w-10 h-10 text-sm';
+  return (
+    <div className={`${s} rounded-full bg-surface-2 border border-line flex items-center justify-center font-semibold text-ink shrink-0`}>
+      {name?.trim()?.charAt(0)?.toUpperCase() || '?'}
+    </div>
+  );
+}
+
+/** Choose what to add — opened by the centre "+" button on phones. */
+function AddChooser({ open, onClose, onPick }) {
+  const items = [
+    { type: 'expense', label: 'Expense', hint: 'Money you spent', icon: Receipt, tone: 'bg-expense/10 text-expense' },
+    { type: 'income', label: 'Income', hint: 'Money you received', icon: Wallet, tone: 'bg-income/10 text-income' },
+    { type: 'investment', label: 'Investment', hint: 'Money you put to work', icon: TrendingUp, tone: 'bg-surface-2 text-ink' },
+  ];
+  return (
+    <Sheet open={open} onClose={onClose} title="Add new" size="sm">
+      <div className="space-y-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {items.map(({ type, label, hint, icon: Icon, tone }) => (
+          <button
+            key={type}
+            onClick={() => onPick(type)}
+            className="w-full flex items-center gap-4 p-3 rounded-2xl border border-line/70 hover:bg-surface-2/70 active:scale-[0.99] transition text-left"
+          >
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${tone}`}>
+              <Icon size={21} strokeWidth={1.9} />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold tracking-tight">{label}</p>
+              <p className="text-[13px] text-muted">{hint}</p>
+            </div>
+            <ChevronRight size={18} className="text-muted" />
+          </button>
+        ))}
+      </div>
+    </Sheet>
+  );
+}
+
+function MoreSheet({ open, onClose, user, onLogout }) {
+  const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
+  const go = (p) => { onClose(); navigate(p); };
+  const links = NAV.filter((n) => MORE_PATHS.includes(n.path));
+
+  return (
+    <Sheet open={open} onClose={onClose} size="sm">
+      <div className="flex items-center gap-3 pb-4 mb-2 border-b border-line/70">
+        <Avatar name={user?.name} />
+        <div className="min-w-0">
+          <p className="font-semibold truncate">{user?.name}</p>
+          <p className="text-[13px] text-muted truncate">{user?.email}</p>
+        </div>
+      </div>
+      <div className="space-y-1">
+        {links.map(({ path, label, icon: Icon }) => (
+          <button key={path} onClick={() => go(path)} className="w-full flex items-center gap-3 h-14 px-3 rounded-2xl hover:bg-surface-2/70 active:bg-surface-2 transition">
+            <Icon size={20} strokeWidth={1.8} className="text-ink-2" />
+            <span className="flex-1 text-left font-medium">{label}</span>
+            <ChevronRight size={18} className="text-muted" />
+          </button>
+        ))}
+        <button onClick={toggleTheme} className="w-full flex items-center gap-3 h-14 px-3 rounded-2xl hover:bg-surface-2/70 transition">
+          {isDark ? <Sun size={20} strokeWidth={1.8} className="text-ink-2" /> : <Moon size={20} strokeWidth={1.8} className="text-ink-2" />}
+          <span className="flex-1 text-left font-medium">{isDark ? 'Light appearance' : 'Dark appearance'}</span>
+        </button>
+        <button onClick={onLogout} className="w-full flex items-center gap-3 h-14 px-3 rounded-2xl hover:bg-expense/5 text-expense transition mb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <LogOut size={20} strokeWidth={1.8} />
+          <span className="flex-1 text-left font-medium">Sign out</span>
+        </button>
+      </div>
+    </Sheet>
+  );
+}
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { openTransaction, confirm } = useUI();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  const [addOpen, setAddOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    setMoreOpen(false);
+    const ok = await confirm({ title: 'Sign out of Aura?', message: 'Your data stays safe — you can sign back in any time.', confirmLabel: 'Sign out' });
+    if (!ok) return;
     logout();
     navigate('/login');
   };
 
-  const currencySymbols = { INR: '₹', USD: '$', SAR: '﷼', AED: 'د.إ' };
+  const moreActive = MORE_PATHS.includes(location.pathname);
 
   return (
-    <div className="min-h-screen bg-dark-50 dark:bg-dark-950 flex">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden modal-overlay"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen w-72 z-50 lg:z-auto
-          bg-white/90 dark:bg-dark-900/95 backdrop-blur-xl
-          border-r border-dark-200 dark:border-dark-800
-          flex flex-col transition-transform duration-300
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
-      >
-        {/* Logo */}
-        <div className="p-6 border-b border-dark-200 dark:border-dark-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-black dark:bg-white flex items-center justify-center text-white dark:text-black text-xl font-bold shadow-glow">
-              A
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-dark-900 dark:text-white">Aura</h1>
-              <p className="text-xs text-dark-500 dark:text-dark-400">Wealth Manager</p>
-            </div>
-          </div>
+    <div className="min-h-dvh bg-canvas lg:flex">
+      {/* ── Desktop sidebar ─────────────────────────────────────────────── */}
+      <aside className="hidden lg:flex sticky top-0 h-dvh w-[264px] shrink-0 flex-col border-r border-line/70 bg-surface/60 backdrop-blur-xl">
+        <div className="px-6 pt-7 pb-6">
+          <Logo size={38} />
         </div>
 
-        {/* Nav links */}
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
+        <div className="px-4">
+          <button onClick={() => openTransaction('expense')} className="btn-primary w-full">
+            <Plus size={18} /> New expense
+          </button>
+        </div>
+
+        <nav className="flex-1 px-3 pt-6 space-y-0.5" aria-label="Main">
+          {NAV.map(({ path, label, icon: Icon }) => (
             <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={() => setSidebarOpen(false)}
+              key={path}
+              to={path}
               className={({ isActive }) =>
-                `nav-item ${isActive ? 'active' : ''}`
+                `flex items-center gap-3 h-11 px-3 rounded-xl text-[14.5px] transition-colors ${
+                  isActive ? 'bg-surface-2 text-ink font-semibold' : 'text-ink-2 hover:text-ink hover:bg-surface-2/60'
+                }`
               }
             >
-              <span className="text-xl"><item.icon size={20} /></span>
-              <span>{item.label}</span>
+              {({ isActive }) => (
+                <>
+                  <Icon size={19} strokeWidth={isActive ? 2.1 : 1.8} />
+                  {label}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        {/* User section */}
-        <div className="p-4 border-t border-dark-200 dark:border-dark-800">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-dark-200 dark:bg-dark-800 flex items-center justify-center text-dark-900 dark:text-white font-bold">
-              {user?.name?.charAt(0)?.toUpperCase() || '?'}
-            </div>
+        <div className="p-4 m-3 rounded-2xl border border-line/70 bg-surface">
+          <div className="flex items-center gap-3">
+            <Avatar name={user?.name} size="sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-dark-900 dark:text-white truncate">{user?.name}</p>
-              <p className="text-xs text-dark-500 dark:text-dark-400 truncate">{currencySymbols[user?.currency] || '₹'} {user?.currency}</p>
+              <p className="text-sm font-semibold truncate">{user?.name}</p>
+              <p className="text-[12px] text-muted truncate">{user?.email}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-              text-sm font-medium text-dark-500 dark:text-dark-400
-              hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400
-              transition-all duration-200"
-          >
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
+          <div className="flex items-center justify-between mt-4">
+            <ThemeToggle />
+            <button onClick={handleLogout} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-expense transition">
+              <LogOut size={15} /> Sign out
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 bg-white/80 dark:bg-dark-900/80 backdrop-blur-xl border-b border-dark-200 dark:border-dark-800">
-          <div className="flex items-center justify-between px-4 lg:px-8 py-4">
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors"
-              aria-label="Open sidebar"
-            >
-              <svg className="w-6 h-6 text-dark-600 dark:text-dark-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+      {/* ── Main column ─────────────────────────────────────────────────── */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Mobile top bar */}
+        <header className="lg:hidden sticky top-0 z-30 bg-canvas/80 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center justify-between h-14 px-4">
+            <button onClick={() => navigate('/dashboard')} aria-label="Home">
+              <Logo size={30} subtitle={null} />
             </button>
-
-            {/* Greeting */}
-            <div className="hidden lg:block">
-              <h2 className="text-lg font-semibold text-dark-900 dark:text-white flex items-center gap-2">
-                Welcome back, {user?.name?.split(' ')[0]} <Hand size={20} className="text-amber-500" />
-              </h2>
-              <p className="text-sm text-dark-500 dark:text-dark-400">
-                {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
-            </div>
-
-            {/* Right side */}
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
+            <div className="flex items-center gap-1">
+              <ThemeToggle compact />
+              <button onClick={() => navigate('/profile')} aria-label="Profile" className="ml-1">
+                <Avatar name={user?.name} size="sm" />
+              </button>
             </div>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 lg:p-8">
-          <div className="page-enter">
+        <main className="flex-1 w-full max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-10 pt-3 lg:pt-10 pb-[calc(6.5rem+env(safe-area-inset-bottom))] lg:pb-14">
+          <div key={location.pathname} className="animate-rise">
             <Outlet />
           </div>
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 lg:hidden z-30 bg-white/90 dark:bg-dark-900/95 backdrop-blur-xl border-t border-dark-200 dark:border-dark-800">
-        <div className="flex justify-around py-2">
-          {navItems.slice(0, 4).map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors ${
-                  isActive
-                    ? 'text-primary-600 dark:text-primary-400'
-                    : 'text-dark-400 dark:text-dark-500'
-                }`
-              }
+      {/* ── Mobile tab bar ──────────────────────────────────────────────── */}
+      <nav
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/85 backdrop-blur-xl border-t border-line/70 pb-[env(safe-area-inset-bottom)]"
+        aria-label="Main"
+      >
+        <div className="grid grid-cols-5 h-16 max-w-md mx-auto">
+          {[NAV[0], NAV[1]].map((item) => <TabLink key={item.path} {...item} />)}
+
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => setAddOpen(true)}
+              className="w-14 h-14 -mt-6 rounded-[20px] bg-ink text-canvas shadow-fab flex items-center justify-center active:scale-95 transition ring-4 ring-canvas"
+              aria-label="Add transaction"
             >
-              <span className="text-xl"><item.icon size={18} /></span>
-              <span className="text-[10px] font-medium">{item.label}</span>
-            </NavLink>
-          ))}
+              <Plus size={26} strokeWidth={2.2} />
+            </button>
+          </div>
+
+          <TabLink {...NAV[2]} />
+          <button
+            onClick={() => setMoreOpen(true)}
+            className={`flex flex-col items-center justify-center gap-1 ${moreActive ? 'text-ink' : 'text-muted'}`}
+            aria-label="More"
+          >
+            <LayoutGrid size={22} strokeWidth={moreActive ? 2.1 : 1.7} />
+            <span className={`text-[10.5px] ${moreActive ? 'font-semibold' : 'font-medium'}`}>More</span>
+          </button>
         </div>
       </nav>
+
+      <AddChooser
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onPick={(type) => { setAddOpen(false); setTimeout(() => openTransaction(type), 180); }}
+      />
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} user={user} onLogout={handleLogout} />
     </div>
+  );
+}
+
+function TabLink({ path, label, icon: Icon }) {
+  return (
+    <NavLink
+      to={path}
+      className={({ isActive }) => `flex flex-col items-center justify-center gap-1 transition-colors ${isActive ? 'text-ink' : 'text-muted'}`}
+    >
+      {({ isActive }) => (
+        <>
+          <Icon size={22} strokeWidth={isActive ? 2.1 : 1.7} />
+          <span className={`text-[10.5px] ${isActive ? 'font-semibold' : 'font-medium'}`}>{label}</span>
+        </>
+      )}
+    </NavLink>
   );
 }

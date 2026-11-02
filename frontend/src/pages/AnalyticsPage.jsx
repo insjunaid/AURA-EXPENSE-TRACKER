@@ -1,218 +1,142 @@
-import { useState, useEffect } from 'react';
+import { Download, Wallet, Receipt, TrendingUp, PiggyBank } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDate } from '../context/DateContext';
 import { analyticsAPI } from '../services/api';
+import { useFetch } from '../lib/useFetch';
+import { MONTHS, formatMoney } from '../lib/format';
 import MonthPicker from '../components/MonthPicker';
 import SummaryCard from '../components/SummaryCard';
 import ExpensePieChart from '../components/charts/ExpensePieChart';
 import SavingsBarChart from '../components/charts/SavingsBarChart';
 import TrendLineChart from '../components/charts/TrendLineChart';
 import SuggestionCard from '../components/SuggestionCard';
-import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
-import { Download, Wallet, CreditCard, TrendingUp, Landmark, PieChart, BarChart3, LineChart, ClipboardList, Lightbulb } from 'lucide-react';
-
-const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', SAR: '﷼', AED: 'د.إ' };
+import PageHeader from '../components/ui/PageHeader';
+import CategoryIcon from '../components/CategoryIcon';
+import { Skeleton } from '../components/ui/Skeleton';
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
+  const currency = user?.currency || 'INR';
   const { month, year, setMonthYear } = useDate();
-  const currency = CURRENCY_SYMBOLS[user?.currency] || '₹';
-  const [analytics, setAnalytics] = useState(null);
-  const [trends, setTrends] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [analyticsRes, trendsRes] = await Promise.all([
-        analyticsAPI.monthly(month, year),
-        analyticsAPI.trends(6),
-      ]);
-      setAnalytics(analyticsRes.data);
-      setTrends(trendsRes.data.trends);
-    } catch {
-      toast.error('Failed to load analytics');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, initialLoading } = useFetch(async () => {
+    const [a, t] = await Promise.all([analyticsAPI.monthly(month, year), analyticsAPI.trends(6)]);
+    return { analytics: a.data, trends: t.data.trends };
+  }, [month, year], { errorText: 'Could not load analytics' });
 
-  useEffect(() => { fetchData(); }, [month, year]);
+  const summary = data?.analytics?.summary;
+  const breakdown = data?.analytics?.breakdown || [];
+  const suggestions = data?.analytics?.suggestions || [];
+  const trends = data?.trends || [];
 
-  if (loading && !analytics) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  const summary = analytics?.summary;
-  const breakdown = analytics?.breakdown || [];
-  const suggestions = analytics?.suggestions || [];
-
-  const handleDownloadReport = () => {
-    if (!analytics) return;
-    const { summary, breakdown } = analytics;
-    let csv = `Aura Wealth Manager - Monthly Report (${month}/${year})\n\n`;
-    
-    // Summary Section
-    csv += `Summary\n`;
-    csv += `Total Income,${summary.total_income}\n`;
-    csv += `Total Expenses,${summary.total_expenses}\n`;
-    csv += `Net Savings,${summary.savings}\n`;
-    csv += `Savings Rate,${summary.savings_rate}%\n\n`;
-
-    // Category Breakdown Section
-    csv += `Expense Breakdown\n`;
-    csv += `Category,Amount,Share (%),Transactions\n`;
-    breakdown.forEach(b => {
-      csv += `"${b.category_name}",${b.total_amount},${b.percentage},${b.transaction_count}\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `aura-report-${year}-${month.toString().padStart(2, '0')}.csv`;
-    link.click();
+  const downloadCsv = () => {
+    if (!summary) return;
+    const rows = [
+      [`Aura Wealth Manager — Monthly Report (${MONTHS[month - 1]} ${year})`],
+      [],
+      ['Summary'],
+      ['Total Income', summary.total_income],
+      ['Total Expenses', summary.total_expenses],
+      ['Total Investments', summary.total_investments],
+      ['Net Savings', summary.savings],
+      ['Savings Rate (%)', summary.savings_rate],
+      [],
+      ['Expense Breakdown'],
+      ['Category', 'Amount', 'Share (%)', 'Transactions'],
+      ...breakdown.map((b) => [b.category_name, b.total_amount, b.percentage, b.transaction_count]),
+    ];
+    const csv = rows.map((r) => r.map((c) => (typeof c === 'string' && /[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aura-report-${year}-${String(month).padStart(2, '0')}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4 }}
-      className="space-y-6 pb-20 lg:pb-0"
-    >
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-dark-900 dark:text-white">Analytics</h1>
-          <p className="text-dark-500 dark:text-dark-400 text-sm mt-1">Deep insights into your spending patterns</p>
+    <div className="space-y-5 lg:space-y-6">
+      <PageHeader
+        eyebrow={`${MONTHS[month - 1]} ${year}`}
+        title="Analytics"
+        subtitle="Patterns in how you earn, spend and save."
+        actions={
+          <>
+            <MonthPicker month={month} year={year} onChange={setMonthYear} />
+            <button onClick={downloadCsv} disabled={!summary} className="btn-outline !h-11 !px-3.5 sm:!px-4" aria-label="Export CSV" title="Export CSV">
+              <Download size={17} /> <span className="hidden sm:inline">Export</span>
+            </button>
+          </>
+        }
+      />
+
+      {initialLoading ? (
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[104px] rounded-3xl" />)}</div>
+          <Skeleton className="h-80 rounded-3xl" />
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <MonthPicker month={month} year={year} onChange={(m, y) => setMonthYear(m, y)} />
-          <button 
-            onClick={handleDownloadReport}
-            className="btn-secondary whitespace-nowrap hidden sm:block"
-            title="Download CSV Report"
-          >
-            <Download size={16} className="inline mr-1" /> Export CSV
-          </button>
-        </div>
-      </div>
-      
-      {/* Mobile Download Button */}
-      <button 
-        onClick={handleDownloadReport}
-        className="btn-secondary w-full sm:hidden flex justify-center items-center gap-2"
-      >
-        <Download size={16} className="inline mr-1" /> Export Monthly Report to CSV
-      </button>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryCard title="Income" amount={summary?.total_income || 0} icon={<Wallet size={24} />} color="green" currency={currency} delay={0} />
-        <SummaryCard title="Expenses" amount={summary?.total_expenses || 0} icon={<CreditCard size={24} />} color="red" currency={currency} delay={100} />
-        <SummaryCard title="Investments" amount={summary?.total_investments || 0} icon={<TrendingUp size={24} />} color="primary" currency={currency} delay={150} />
-        <SummaryCard title="Savings (Remaining)" amount={summary?.savings || 0} icon={<Landmark size={24} />} color="purple" currency={currency} delay={200} />
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Expense Breakdown Pie */}
-        <div className="glass-card p-6 animate-slide-up">
-          <h3 className="text-lg font-semibold text-dark-900 dark:text-white mb-4">
-            <PieChart size={20} className="inline mr-2" />Expense Breakdown
-          </h3>
-          <ExpensePieChart breakdown={breakdown} />
-        </div>
-
-        {/* Monthly Comparison Bar */}
-        <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <h3 className="text-lg font-semibold text-dark-900 dark:text-white mb-4">
-            <BarChart3 size={20} className="inline mr-2" />Monthly Comparison
-          </h3>
-          <SavingsBarChart trends={trends} />
-        </div>
-      </div>
-
-      {/* Full-width Trend Line */}
-      <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
-        <h3 className="text-lg font-semibold text-dark-900 dark:text-white mb-4">
-          <LineChart size={20} className="inline mr-2" />Income vs Expense Trends (Last 6 Months)
-        </h3>
-        <TrendLineChart trends={trends} />
-      </div>
-
-      {/* Category Details Table */}
-      {breakdown.length > 0 && (
-        <div className="glass-card overflow-hidden animate-slide-up" style={{ animationDelay: '300ms' }}>
-          <div className="p-6 pb-4">
-            <h3 className="text-lg font-semibold text-dark-900 dark:text-white">
-              <ClipboardList size={20} className="inline mr-2" />Category Details
-            </h3>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+            <SummaryCard title="Income" amount={summary?.total_income} tone="income" icon={<Wallet size={16} />} currency={currency} />
+            <SummaryCard title="Expenses" amount={summary?.total_expenses} tone="expense" icon={<Receipt size={16} />} currency={currency} />
+            <SummaryCard title="Invested" amount={summary?.total_investments} icon={<TrendingUp size={16} />} currency={currency} />
+            <SummaryCard
+              title="Saved"
+              amount={summary?.savings}
+              icon={<PiggyBank size={16} />}
+              currency={currency}
+              note={`${(summary?.savings_rate ?? 0).toFixed(1)}% savings rate`}
+            />
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-t border-b border-dark-200 dark:border-dark-700 bg-dark-50 dark:bg-dark-900/50">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-dark-500 dark:text-dark-400 uppercase tracking-wider">Category</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-dark-500 dark:text-dark-400 uppercase tracking-wider">Amount</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-dark-500 dark:text-dark-400 uppercase tracking-wider">Share</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-dark-500 dark:text-dark-400 uppercase tracking-wider">Transactions</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-dark-500 dark:text-dark-400 uppercase tracking-wider">Distribution</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-dark-100 dark:divide-dark-700/50">
-                {breakdown.map((b, i) => (
-                  <tr key={b.category_name} className="hover:bg-dark-50 dark:hover:bg-dark-700/30 transition-colors animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">{b.category_icon}</span>
-                        <span className="text-sm font-medium text-dark-800 dark:text-dark-200">{b.category_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm font-bold text-dark-900 dark:text-white">
-                      {currency}{b.total_amount.toLocaleString('en-IN')}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-dark-600 dark:text-dark-300">
-                      {b.percentage}%
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-dark-500 dark:text-dark-400">
-                      {b.transaction_count}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="w-full h-2 rounded-full bg-dark-200 dark:bg-dark-600 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-1000 ease-out"
-                          style={{ width: `${b.percentage}%`, backgroundColor: b.category_color }}
-                        />
-                      </div>
-                    </td>
-                  </tr>
+
+          <div className="grid lg:grid-cols-2 gap-5 lg:gap-6">
+            <section className="card p-5 sm:p-6">
+              <h2 className="section-title mb-5">Spending by category</h2>
+              <ExpensePieChart breakdown={breakdown} currency={currency} />
+            </section>
+            <section className="card p-5 sm:p-6">
+              <h2 className="section-title mb-4">Monthly comparison</h2>
+              <SavingsBarChart trends={trends} currency={currency} />
+            </section>
+          </div>
+
+          <section className="card p-5 sm:p-6">
+            <h2 className="section-title mb-4">Income vs expenses · last 6 months</h2>
+            <TrendLineChart trends={trends} currency={currency} />
+          </section>
+
+          {breakdown.length > 0 && (
+            <section className="card p-2 sm:p-3">
+              <h2 className="section-title px-3 pt-3 pb-2">Category details</h2>
+              <div className="divide-y divide-line/60">
+                {[...breakdown].sort((a, b) => b.total_amount - a.total_amount).map((b) => (
+                  <div key={b.category_name} className="flex items-center gap-3 px-3 py-3">
+                    <CategoryIcon type="expense" name={b.category_name} emoji={b.category_icon} color={b.category_color} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14.5px] font-medium truncate">{b.category_name}</p>
+                      <p className="text-[12.5px] text-muted">
+                        {b.transaction_count} {b.transaction_count === 1 ? 'transaction' : 'transactions'} · {b.percentage}%
+                      </p>
+                    </div>
+                    <p className="text-[15px] font-semibold tabular">{formatMoney(b.total_amount, currency)}</p>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+              </div>
+            </section>
+          )}
 
-      {/* Suggestions */}
-      {suggestions.length > 0 && (
-        <div className="animate-slide-up" style={{ animationDelay: '400ms' }}>
-          <h3 className="text-lg font-semibold text-dark-900 dark:text-white mb-4">
-            <Lightbulb size={20} className="inline mr-2" />Smart Suggestions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {suggestions.map((s, i) => (
-              <SuggestionCard key={i} suggestion={s} />
-            ))}
-          </div>
-        </div>
+          {suggestions.length > 0 && (
+            <section>
+              <h2 className="section-title mb-3">Smart suggestions</h2>
+              <div className="grid md:grid-cols-2 gap-3 lg:gap-4">
+                {suggestions.map((s, i) => <SuggestionCard key={i} suggestion={s} currency={currency} />)}
+              </div>
+            </section>
+          )}
+        </>
       )}
-    </motion.div>
+    </div>
   );
 }
