@@ -7,7 +7,7 @@
   <br />
   
   <div>
-    <img src="https://img.shields.io/badge/React-18.0-61DAFB?logo=react&logoColor=black&style=flat-square" alt="React Badge"/>
+    <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black&style=flat-square" alt="React Badge"/>
     <img src="https://img.shields.io/badge/Vite-6.0-646CFF?logo=vite&logoColor=white&style=flat-square" alt="Vite Badge"/>
     <img src="https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?logo=tailwind-css&logoColor=white&style=flat-square" alt="Tailwind Badge"/>
     <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white&style=flat-square" alt="FastAPI Badge"/>
@@ -18,39 +18,42 @@
   <br />
   <br />
 
-  **Aura is a full-stack, highly aesthetic personal finance platform designed to give users deep, actionable insights into their wealth. Built with a premium monochromatic glassmorphism design, Aura allows you to seamlessly track your income, categorize daily expenses, and monitor your long-term investments. With dynamic data visualization and smart savings calculations, taking control of your financial future has never looked this good.**
+  **Aura is a full-stack, highly aesthetic personal finance platform designed to give users deep, actionable insights into their wealth. Built mobile-first with a premium, classic monochrome design, Aura allows you to seamlessly track your income, categorize daily expenses, and monitor your long-term investments. With dynamic data visualization and smart savings calculations, taking control of your financial future has never looked this good.**
 </div>
 
 <br />
 
 <div align="center">
- <img width="1000" height="550" alt="{6FCC0DBA-89BC-4689-BC85-6A4C2DC708F9}" src="https://github.com/user-attachments/assets/70d62904-462d-4d69-ac75-d35f2f84490a" />
-
-  <br/>
-  <br/>
- 
-  <img width="1000" height="550" alt="{371E8AC0-32AF-4624-8447-3C07D70604E0}" src="https://github.com/user-attachments/assets/961d246c-0ef8-4133-9079-2563cdeb9619" />
-
+  <img src="docs/screenshots/desktop-dashboard-light.png" alt="Aura dashboard on desktop (light mode)" width="1000" />
+  <br/><br/>
+  <img src="docs/screenshots/mobile-showcase-light.png" alt="Aura on mobile: dashboard, expenses and the add-expense sheet" width="1000" />
+  <br/><br/>
+  <img src="docs/screenshots/desktop-analytics-dark.png" alt="Aura analytics on desktop (dark mode)" width="1000" />
+  <br/><br/>
+  <img src="docs/screenshots/mobile-showcase-dark.png" alt="Aura on mobile in dark mode" width="1000" />
 </div>
 
 <br />
 
 ## ✨ Features
 
-- **Monochrome Glassmorphism UI:** Fluid page transitions, sleek dark/light mode detection, and a professional black & white aesthetic built with TailwindCSS and Framer Motion.
+- **Mobile-First Premium UI:** Bottom tab bar with a one-tap add button, bottom-sheet forms, and a calm monochrome design with emerald (income) and rose (expense) accents. Full light and dark themes, with a refined sidebar layout on desktop.
+- **Installable App (PWA):** Add Aura to your phone's home screen and it opens full-screen like a native app.
+- **Fast After Idle:** A keep-alive ping plus an automatic server warm-up keep the free-tier backend from sleeping (see [KEEP_ALIVE.md](KEEP_ALIVE.md)).
 - **Strict Data Isolation:** Custom JWT-based authentication ensures your financial data is completely secure and isolated from other users in the system.
 - **Smart Wealth Tracking:** Separates your cash flow (Income vs. Expenses) from your assets (Investments), giving you an accurate "Remaining Savings" calculation.
-- **Comprehensive Analytics:** Dynamic pie charts and trend lines (built with Recharts) break down your monthly spending habits, transaction counts, and savings rates.
+- **Comprehensive Analytics:** Category donut, monthly comparison bars and six-month trend lines (built with Chart.js) break down your monthly spending habits, transaction counts, and savings rates.
 - **Multi-Currency Support:** Track your wealth in INR (₹), USD ($), SAR (﷼), or AED (د.إ).
-- **One-Click Export:** Download detailed CSV reports of your monthly financial summaries directly from the dashboard.
+- **One-Click Export:** Download detailed CSV reports of your monthly financial summaries from the Analytics page.
 
 ## 🛠 Tech Stack
 
 ### Frontend
-- **Framework:** React 18 (Vite)
-- **Styling:** TailwindCSS, Vanilla CSS (Glassmorphism), Headless UI
+- **Framework:** React 19 (Vite)
+- **Styling:** TailwindCSS with CSS-variable design tokens (light/dark)
+- **Typography & Icons:** Geist, Instrument Serif, Lucide icons
 - **Animations:** Framer Motion
-- **Data Visualization:** Recharts
+- **Data Visualization:** Chart.js (react-chartjs-2)
 - **State/Routing:** React Router DOM, Context API, Axios
 
 ### Backend
